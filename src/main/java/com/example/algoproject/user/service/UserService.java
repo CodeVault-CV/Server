@@ -1,8 +1,10 @@
 package com.example.algoproject.user.service;
 
+import com.example.algoproject.user.domain.User;
 import com.example.algoproject.user.dto.TokenResponse;
 import com.example.algoproject.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
@@ -16,7 +18,9 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Map;
+import java.util.Optional;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class UserService {
@@ -31,7 +35,6 @@ public class UserService {
 
     @Transactional
     public String login(String code) {
-        System.out.println("code : " + code);
 
         HttpHeaders headers = new HttpHeaders();
         headers.add("Accept", "application/json");
@@ -45,14 +48,13 @@ public class UserService {
 
         RestTemplate rt = new RestTemplate();
 
+        // {code} 를 이용해 Github 에 access_token 요청
         ResponseEntity<TokenResponse> response = rt.exchange(
                 "https://github.com/login/oauth/access_token",
                 HttpMethod.POST,
                 entity,
                 TokenResponse.class
         );
-
-        System.out.println("access_token : " + response.getBody().getAccess_token());
 
         headers.clear();
         headers.add("User-Agent", "api-test");
@@ -62,6 +64,8 @@ public class UserService {
         HttpEntity<String> httpEntity = new HttpEntity<>(headers);
 
         rt = new RestTemplate();
+
+        // 받은 access_token 으로 사용자 정보 요청
         ResponseEntity<Map<String, String>> resp = rt.exchange(
                 "https://api.github.com/user",
                 HttpMethod.GET,
@@ -69,8 +73,20 @@ public class UserService {
                 new ParameterizedTypeReference<>() {
                 });
 
-        System.out.println(resp.toString());
-        System.out.println("name= " + resp.getBody().get("login") + " id= " + resp.getBody().get("id"));
+        Map<String, String> respBody = resp.getBody();
+
+        Optional<User> user = userRepository.findByUserId(respBody.get("id"));
+
+        if (user.isEmpty()) {
+            log.info("Add new user to database... " + resp.getBody().get("login"));
+            userRepository.save(new User(respBody.get("id"), respBody.get("login"), response.getBody().getAccess_token()));
+        }
+        else {
+            log.info("User already exists. Renew User Name & Access Token...");
+            user.get().setAccessToken(response.getBody().getAccess_token());
+            user.get().setName(respBody.get("login"));
+            userRepository.save(user.get());
+        }
 
         return resp.getBody().get("id");
     }

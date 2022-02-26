@@ -13,5 +13,23 @@ public class User {
     @Id
     private String userId;
 
+    public String name;
+
     private String accessToken;
+
+    public User(String userId, String name, String accessToken) {
+        this.userId = userId;
+        this.name = name;
+        this.accessToken = accessToken;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setAccessToken(String accessToken) {
+        this.accessToken = accessToken;
+    }
 }
+
+
