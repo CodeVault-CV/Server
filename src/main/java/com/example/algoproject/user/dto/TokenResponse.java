@@ -1,4 +1,4 @@
-package com.example.algoproject.user.domain;
+package com.example.algoproject.user.dto;
 
 import lombok.Getter;
 
