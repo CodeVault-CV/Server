@@ -3,6 +3,7 @@ package com.example.algoproject.user.service;
 import com.example.algoproject.user.domain.User;
 import com.example.algoproject.user.dto.TokenResponse;
 import com.example.algoproject.user.repository.UserRepository;
+import com.example.algoproject.util.JWTUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,6 +27,7 @@ import java.util.Optional;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final JWTUtil jwtUtil;
 
     @Value("${client.id}")
     private String clientId;
@@ -88,6 +90,11 @@ public class UserService {
             user.get().setName(respBody.get("login").toString());
             userRepository.save(user.get());
         }
+
+        // jwt 발급
+//        String jwtToken = jwtUtil.makeJWT(respBody.get("id"));
+//        System.out.println(jwtToken);
+//        System.out.println(jwtUtil.getJWTId(jwtToken));
 
         return resp.getBody().get("id").toString();
     }
