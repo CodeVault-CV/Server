@@ -40,6 +40,7 @@ public class UserService {
 
         HttpHeaders headers = new HttpHeaders();
         headers.add("Accept", "application/json");
+        headers.add("User-Agent", "api-test");
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("client_id", clientId);
@@ -68,25 +69,25 @@ public class UserService {
         rt = new RestTemplate();
 
         // 받은 access_token 으로 사용자 정보 요청
-        ResponseEntity<Map<String, String>> resp = rt.exchange(
+        ResponseEntity<Map<String, Object>> resp = rt.exchange(
                 "https://api.github.com/user",
                 HttpMethod.GET,
                 httpEntity,
                 new ParameterizedTypeReference<>() {
                 });
 
-        Map<String, String> respBody = resp.getBody();
+        Map<String, Object> respBody = resp.getBody();
 
-        Optional<User> user = userRepository.findByUserId(respBody.get("id"));
+        Optional<User> user = userRepository.findByUserId(respBody.get("id").toString());
 
         if (user.isEmpty()) {
             log.info("Add new user to database... " + resp.getBody().get("login"));
-            userRepository.save(new User(respBody.get("id"), respBody.get("login"), response.getBody().getAccess_token()));
+            userRepository.save(new User(respBody.get("id").toString(), respBody.get("login").toString(), response.getBody().getAccess_token()));
         }
         else {
             log.info("User already exists. Renew User Name & Access Token...");
             user.get().setAccessToken(response.getBody().getAccess_token());
-            user.get().setName(respBody.get("login"));
+            user.get().setName(respBody.get("login").toString());
             userRepository.save(user.get());
         }
 
@@ -95,6 +96,6 @@ public class UserService {
 //        System.out.println(jwtToken);
 //        System.out.println(jwtUtil.getJWTId(jwtToken));
 
-        return resp.getBody().get("id");
+        return resp.getBody().get("id").toString();
     }
 }
