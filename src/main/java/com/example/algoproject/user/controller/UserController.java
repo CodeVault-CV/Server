@@ -18,4 +18,10 @@ public class UserController {
     public String login(@RequestParam String code){
         return userService.login(code);
     }
+
+    // spring security 테스트
+    @GetMapping("/test/checkJWT")
+    public CustomUserDetailsVO testJWT(@AuthenticationPrincipal CustomUserDetailsVO cudVO) {
+        return cudVO;
+    }
 }
