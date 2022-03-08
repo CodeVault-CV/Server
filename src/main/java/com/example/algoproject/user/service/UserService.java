@@ -3,7 +3,7 @@ package com.example.algoproject.user.service;
 import com.example.algoproject.user.domain.User;
 import com.example.algoproject.user.dto.TokenResponse;
 import com.example.algoproject.user.repository.UserRepository;
-import com.example.algoproject.util.JWTUtil;
+import com.example.algoproject.security.JWTUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -92,10 +92,8 @@ public class UserService {
         }
 
         // jwt 발급
-//        String jwtToken = jwtUtil.makeJWT(respBody.get("id"));
-//        System.out.println(jwtToken);
-//        System.out.println(jwtUtil.getJWTId(jwtToken));
+        String jwtToken = jwtUtil.makeJWT(respBody.get("id").toString());
 
-        return resp.getBody().get("id").toString();
+        return jwtToken;
     }
 }
