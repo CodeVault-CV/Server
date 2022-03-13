@@ -13,7 +13,7 @@ public class User {
     @Id
     private String userId;
 
-    public String name;
+    private String name;
 
     private String accessToken;
 
