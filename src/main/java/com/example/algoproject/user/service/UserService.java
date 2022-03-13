@@ -38,6 +38,31 @@ public class UserService {
     @Transactional
     public String login(String code) {
 
+        // {code} 를 이용해 Github 에 access_token 요청
+        TokenResponse tokenResponse = accessTokenResponse(code);
+
+        // 받은 access_token 으로 Github 에 사용자 정보 요청
+        Map<String, Object> userInfoResponse = userInfoResponse(tokenResponse.getAccess_token());
+
+        Optional<User> user = userRepository.findByUserId(userInfoResponse.get("id").toString());
+
+        if (user.isEmpty()) {
+            log.info("Add new user to database... " + userInfoResponse.get("login"));
+            userRepository.save(new User(userInfoResponse.get("id").toString(), userInfoResponse.get("login").toString(), tokenResponse.getAccess_token()));
+        }
+        else {
+            log.info(user.get().getName() + " User already exists. Renew User Name & Access Token...");
+            user.get().setAccessToken(tokenResponse.getAccess_token());
+            // 유저의 이름이 변경되었을 수도 있기 때문에 accessToken 과 같이 갱신해 준다
+            user.get().setName(userInfoResponse.get("login").toString());
+            userRepository.save(user.get());
+        }
+
+        return jwtUtil.makeJWT(userInfoResponse.get("id").toString());
+    }
+
+    private TokenResponse accessTokenResponse(String code) {
+
         HttpHeaders headers = new HttpHeaders();
         headers.add("Accept", "application/json");
         headers.add("User-Agent", "api-test");
@@ -49,51 +74,36 @@ public class UserService {
 
         HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(params, headers);
 
-        RestTemplate rt = new RestTemplate();
+        RestTemplate restTemplate = new RestTemplate();
 
-        // {code} 를 이용해 Github 에 access_token 요청
-        ResponseEntity<TokenResponse> response = rt.exchange(
+        ResponseEntity<TokenResponse> response = restTemplate.exchange(
                 "https://github.com/login/oauth/access_token",
                 HttpMethod.POST,
                 entity,
                 TokenResponse.class
         );
 
-        headers.clear();
+        return response.getBody();
+    }
+
+    private Map<String, Object> userInfoResponse(String accessToken) {
+
+        HttpHeaders headers = new HttpHeaders();
         headers.add("User-Agent", "api-test");
-        headers.add("Authorization", "token " + response.getBody().getAccess_token());
+        headers.add("Authorization", "token " + accessToken);
         headers.add("Accept", "application/vnd.github.v3+json");
 
-        HttpEntity<String> httpEntity = new HttpEntity<>(headers);
+        HttpEntity<String> entity = new HttpEntity<>(headers);
 
-        rt = new RestTemplate();
+        RestTemplate restTemplate = new RestTemplate();
 
-        // 받은 access_token 으로 사용자 정보 요청
-        ResponseEntity<Map<String, Object>> resp = rt.exchange(
+        ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
                 "https://api.github.com/user",
                 HttpMethod.GET,
-                httpEntity,
+                entity,
                 new ParameterizedTypeReference<>() {
                 });
 
-        Map<String, Object> respBody = resp.getBody();
-
-        Optional<User> user = userRepository.findByUserId(respBody.get("id").toString());
-
-        if (user.isEmpty()) {
-            log.info("Add new user to database... " + resp.getBody().get("login"));
-            userRepository.save(new User(respBody.get("id").toString(), respBody.get("login").toString(), response.getBody().getAccess_token()));
-        }
-        else {
-            log.info("User already exists. Renew User Name & Access Token...");
-            user.get().setAccessToken(response.getBody().getAccess_token());
-            user.get().setName(respBody.get("login").toString());
-            userRepository.save(user.get());
-        }
-
-        // jwt 발급
-        String jwtToken = jwtUtil.makeJWT(respBody.get("id").toString());
-
-        return jwtToken;
+        return response.getBody();
     }
 }
