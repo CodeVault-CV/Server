@@ -1,5 +1,6 @@
 package com.example.algoproject.security;
 
+import com.example.algoproject.errors.exception.NotValidateJWTException;
 import io.jsonwebtoken.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -59,17 +60,25 @@ public class JWTUtil {
 
     // header에서 token 값 추출
     public String resolveToken(HttpServletRequest request) {
+
         String token = request.getHeader("Authorization");
-        return token.substring("Bearer ".length());
+
+        if (token == null || !token.contains("Bearer ")) {
+            throw new NotValidateJWTException();
+        }
+        String jwt = token.substring("Bearer ".length());
+        if (jwt.equals("")) {
+            throw new NotValidateJWTException();
+        }
+        return jwt;
     }
 
     // 토큰 유효성 and 만료일자 확인
-    public boolean validateToken(String jwtToken) {
-        try {
-            Jws<Claims> claims = Jwts.parser().setSigningKey(key).parseClaimsJws(jwtToken);
-            return !claims.getBody().getExpiration().before(new Date());
-        } catch (Exception e) {
-            return false;
+    public void validateToken(String jwtToken) {
+
+        Jws<Claims> claims = Jwts.parser().setSigningKey(key).parseClaimsJws(jwtToken);
+        if (claims.getBody().getExpiration().before(new Date())) {
+            throw new NotValidateJWTException();
         }
     }
 }
