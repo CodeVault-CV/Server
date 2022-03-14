@@ -1,23 +1,26 @@
 package com.example.algoproject.user.service;
 
+import com.example.algoproject.errors.exception.NotExistUserException;
+import com.example.algoproject.s3.S3Uploader;
 import com.example.algoproject.user.domain.User;
+import com.example.algoproject.user.dto.CustomUserDetailsVO;
 import com.example.algoproject.user.dto.TokenResponse;
+import com.example.algoproject.user.dto.UserProfileResponse;
 import com.example.algoproject.user.repository.UserRepository;
 import com.example.algoproject.security.JWTUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 
@@ -28,6 +31,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final JWTUtil jwtUtil;
+    private final S3Uploader s3Uploader;
 
     @Value("${client.id}")
     private String clientId;
@@ -59,6 +63,22 @@ public class UserService {
         }
 
         return jwtUtil.makeJWT(userInfoResponse.get("id").toString());
+    }
+
+    public UserProfileResponse upload(CustomUserDetailsVO cudVO, MultipartFile multipartFile) throws IOException {
+
+        String url = s3Uploader.upload(multipartFile, "static");
+        User user = userRepository.findByUserId(cudVO.getUsername()).orElseThrow(NotExistUserException::new);
+
+        user.setImageUrl(url);
+        userRepository.save(user);
+
+        return new UserProfileResponse(user.getName(), user.getImageUrl());
+    }
+
+    public UserProfileResponse profile(String name) {
+        User user = userRepository.findByName(name).orElseThrow(NotExistUserException::new);
+        return new UserProfileResponse(user.getName(), user.getImageUrl());
     }
 
     private TokenResponse accessTokenResponse(String code) {
