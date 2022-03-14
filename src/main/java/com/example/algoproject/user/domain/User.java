@@ -17,6 +17,8 @@ public class User {
 
     private String accessToken;
 
+    private String imageUrl;
+
     public User(String userId, String name, String accessToken) {
         this.userId = userId;
         this.name = name;
@@ -29,6 +31,10 @@ public class User {
 
     public void setAccessToken(String accessToken) {
         this.accessToken = accessToken;
+    }
+
+    public void setImageUrl(String url) {
+        this.imageUrl = url;
     }
 }
 
