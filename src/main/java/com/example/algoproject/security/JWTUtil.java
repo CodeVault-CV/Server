@@ -3,6 +3,7 @@ package com.example.algoproject.security;
 import com.example.algoproject.errors.exception.NotValidateJWTException;
 import io.jsonwebtoken.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -15,6 +16,7 @@ import java.time.Duration;
 import java.util.Base64;
 import java.util.Date;
 
+@Slf4j
 @RequiredArgsConstructor
 @Component
 public class JWTUtil {
@@ -64,10 +66,12 @@ public class JWTUtil {
         String token = request.getHeader("Authorization");
 
         if (token == null || !token.contains("Bearer ")) {
+            log.info("The header is malformed.");
             throw new NotValidateJWTException();
         }
         String jwt = token.substring("Bearer ".length());
         if (jwt.equals("")) {
+            log.info("Jwt token is null");
             throw new NotValidateJWTException();
         }
         return jwt;
@@ -78,6 +82,7 @@ public class JWTUtil {
 
         Jws<Claims> claims = Jwts.parser().setSigningKey(key).parseClaimsJws(jwtToken);
         if (claims.getBody().getExpiration().before(new Date())) {
+            log.info("Jwt token is invalid.");
             throw new NotValidateJWTException();
         }
     }
