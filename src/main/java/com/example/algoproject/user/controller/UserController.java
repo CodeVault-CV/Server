@@ -1,6 +1,7 @@
 package com.example.algoproject.user.controller;
 
 import com.example.algoproject.user.dto.CustomUserDetailsVO;
+import com.example.algoproject.user.dto.LoginResponse;
 import com.example.algoproject.user.dto.UserProfileResponse;
 import com.example.algoproject.user.service.UserService;
 import io.swagger.annotations.ApiOperation;
@@ -20,7 +21,7 @@ public class UserController {
 
     @ApiOperation(value="로그인", notes="code를 받아 github api 수행후 jwt token 반환")
     @GetMapping("/login")
-    public String login(@RequestParam String code){
+    public LoginResponse login(@RequestParam String code){
         return userService.login(code);
     }
 
