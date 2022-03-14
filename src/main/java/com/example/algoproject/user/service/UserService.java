@@ -66,6 +66,7 @@ public class UserService {
         return new LoginResponse(jwtUtil.makeJWT(userInfoResponse.get("id").toString()), userInfoResponse.get("login").toString());
     }
 
+    @Transactional
     public UserProfileResponse upload(CustomUserDetailsVO cudVO, MultipartFile multipartFile) throws IOException {
 
         String url = s3Uploader.upload(multipartFile, "static");
@@ -77,6 +78,7 @@ public class UserService {
         return new UserProfileResponse(user.getName(), user.getImageUrl());
     }
 
+    @Transactional
     public UserProfileResponse profile(String name) {
         User user = userRepository.findByName(name).orElseThrow(NotExistUserException::new);
         return new UserProfileResponse(user.getName(), user.getImageUrl());
