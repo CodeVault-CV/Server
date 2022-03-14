@@ -4,6 +4,7 @@ import com.example.algoproject.errors.exception.NotExistUserException;
 import com.example.algoproject.s3.S3Uploader;
 import com.example.algoproject.user.domain.User;
 import com.example.algoproject.user.dto.CustomUserDetailsVO;
+import com.example.algoproject.user.dto.LoginResponse;
 import com.example.algoproject.user.dto.TokenResponse;
 import com.example.algoproject.user.dto.UserProfileResponse;
 import com.example.algoproject.user.repository.UserRepository;
@@ -40,7 +41,7 @@ public class UserService {
     private String clientSecret;
 
     @Transactional
-    public String login(String code) {
+    public LoginResponse login(String code) {
 
         // {code} 를 이용해 Github 에 access_token 요청
         TokenResponse tokenResponse = accessTokenResponse(code);
@@ -62,9 +63,10 @@ public class UserService {
             userRepository.save(user.get());
         }
 
-        return jwtUtil.makeJWT(userInfoResponse.get("id").toString());
+        return new LoginResponse(jwtUtil.makeJWT(userInfoResponse.get("id").toString()), userInfoResponse.get("login").toString());
     }
 
+    @Transactional
     public UserProfileResponse upload(CustomUserDetailsVO cudVO, MultipartFile multipartFile) throws IOException {
 
         String url = s3Uploader.upload(multipartFile, "static");
@@ -76,6 +78,7 @@ public class UserService {
         return new UserProfileResponse(user.getName(), user.getImageUrl());
     }
 
+    @Transactional
     public UserProfileResponse profile(String name) {
         User user = userRepository.findByName(name).orElseThrow(NotExistUserException::new);
         return new UserProfileResponse(user.getName(), user.getImageUrl());
