@@ -53,29 +53,16 @@ public class UserService {
 
         if (user.isEmpty()) {
             log.info("Add new user to database... " + userInfoResponse.get("login"));
-            userRepository.save(new User(userInfoResponse.get("id").toString(), userInfoResponse.get("login").toString(), tokenResponse.getAccess_token()));
+            userRepository.save(new User(userInfoResponse.get("id").toString(), userInfoResponse.get("login").toString(), tokenResponse.getAccess_token(), userInfoResponse.get("avatar_url").toString()));
         }
         else {
             log.info(user.get().getName() + " User already exists. Renew User Name & Access Token...");
-            user.get().setAccessToken(tokenResponse.getAccess_token());
-            // 유저의 이름이 변경되었을 수도 있기 때문에 accessToken 과 같이 갱신해 준다
-            user.get().setName(userInfoResponse.get("login").toString());
+            // 유저의 이름과 프로필 사진이 변경되었을 수도 있기 때문에 accessToken 과 같이 갱신해 준다
+            user.get().update(tokenResponse.getAccess_token(), userInfoResponse.get("login").toString(), userInfoResponse.get("avatar_url").toString());
             userRepository.save(user.get());
         }
 
         return new LoginResponse(jwtUtil.makeJWT(userInfoResponse.get("id").toString()), userInfoResponse.get("login").toString());
-    }
-
-    @Transactional
-    public UserProfileResponse upload(CustomUserDetailsVO cudVO, MultipartFile multipartFile) throws IOException {
-
-        String url = s3Uploader.upload(multipartFile, "static");
-        User user = userRepository.findByUserId(cudVO.getUsername()).orElseThrow(NotExistUserException::new);
-
-        user.setImageUrl(url);
-        userRepository.save(user);
-
-        return new UserProfileResponse(user.getName(), user.getImageUrl());
     }
 
     @Transactional

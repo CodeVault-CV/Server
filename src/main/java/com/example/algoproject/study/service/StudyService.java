@@ -42,7 +42,7 @@ public class StudyService {
         // 팀장의 github 이름으로 repoName 이 이름인 레포지토리 생성
         Map<String, Object> response = createRepositoryResponse(leader, repoName);
 
-        studyRepository.save(new Study(response.get("id").toString(), repoName, cudVO.getUsername()));
+        studyRepository.save(new Study(response.get("id").toString(), response.get("name").toString(), cudVO.getUsername(), response.get("html_url").toString()));
 
         return SuccessResponse.of(HttpStatus.CREATED, "스터디가 생성되었습니다.");
     }

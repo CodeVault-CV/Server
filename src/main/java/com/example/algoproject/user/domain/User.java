@@ -19,22 +19,17 @@ public class User {
 
     private String imageUrl;
 
-    public User(String userId, String name, String accessToken) {
+    public User(String userId, String name, String accessToken, String imageUrl) {
         this.userId = userId;
         this.name = name;
         this.accessToken = accessToken;
+        this.imageUrl = imageUrl;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public void setAccessToken(String accessToken) {
+    public void update(String accessToken, String name, String imageUrl) {
         this.accessToken = accessToken;
-    }
-
-    public void setImageUrl(String url) {
-        this.imageUrl = url;
+        this.name = name;
+        this.imageUrl = imageUrl;
     }
 }
 
