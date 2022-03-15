@@ -25,12 +25,6 @@ public class UserController {
         return userService.login(code);
     }
 
-    @ApiOperation(value="프로필 사진 추가", notes="파일로 사진을 받아 S3에 저장후 이름과 이미지 url을 반환")
-    @PostMapping("/images")
-    public UserProfileResponse upload(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @RequestParam("images")MultipartFile multipartFile) throws IOException {
-        return userService.upload(cudVO, multipartFile);
-    }
-
     @ApiOperation(value="프로필", notes="이름을 파라미터로 받아 이름과 프로필사진 url을 반환")
     @GetMapping("/profile")
     public UserProfileResponse profile(@AuthenticationPrincipal @RequestParam String name) {
