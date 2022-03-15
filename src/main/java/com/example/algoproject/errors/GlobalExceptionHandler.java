@@ -16,7 +16,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(NotExistStudyException.class)
-    ResponseEntity<ErrorResponse> handleAlreadyExistEmail(NotExistStudyException ex) {
+    ResponseEntity<ErrorResponse> handleAlreadyExistStudy(NotExistStudyException ex) {
         return handleBadRequest(ex);
     }
 

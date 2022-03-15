@@ -1,7 +1,9 @@
 package com.example.algoproject.security;
 
+import com.example.algoproject.errors.exception.NotValidateJWTException;
 import io.jsonwebtoken.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -14,6 +16,7 @@ import java.time.Duration;
 import java.util.Base64;
 import java.util.Date;
 
+@Slf4j
 @RequiredArgsConstructor
 @Component
 public class JWTUtil {
@@ -59,17 +62,28 @@ public class JWTUtil {
 
     // header에서 token 값 추출
     public String resolveToken(HttpServletRequest request) {
+
         String token = request.getHeader("Authorization");
-        return token.substring("Bearer ".length());
+
+        if (token == null || !token.contains("Bearer ")) {
+            log.info("The header is malformed.");
+            throw new NotValidateJWTException();
+        }
+        String jwt = token.substring("Bearer ".length());
+        if (jwt.equals("")) {
+            log.info("Jwt token is null");
+            throw new NotValidateJWTException();
+        }
+        return jwt;
     }
 
     // 토큰 유효성 and 만료일자 확인
-    public boolean validateToken(String jwtToken) {
-        try {
-            Jws<Claims> claims = Jwts.parser().setSigningKey(key).parseClaimsJws(jwtToken);
-            return !claims.getBody().getExpiration().before(new Date());
-        } catch (Exception e) {
-            return false;
+    public void validateToken(String jwtToken) {
+
+        Jws<Claims> claims = Jwts.parser().setSigningKey(key).parseClaimsJws(jwtToken);
+        if (claims.getBody().getExpiration().before(new Date())) {
+            log.info("Jwt token is invalid.");
+            throw new NotValidateJWTException();
         }
     }
 }
