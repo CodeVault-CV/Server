@@ -65,11 +65,11 @@ public class JWTUtil {
 
         String token = request.getHeader("Authorization");
 
-        if (token == null || !token.contains("Bearer ")) {
+        if (token == null || !token.contains("Bearer")) {
             log.info("The header is malformed.");
             throw new NotValidateJWTException();
         }
-        String jwt = token.substring("Bearer ".length());
+        String jwt = token.substring("Bearer".length()).stripLeading();
         if (jwt.equals("")) {
             log.info("Jwt token is null");
             throw new NotValidateJWTException();
