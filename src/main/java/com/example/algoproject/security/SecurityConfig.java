@@ -1,5 +1,6 @@
 package com.example.algoproject.security;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
@@ -19,7 +20,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Configuration
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
-    private final JWTAuthenticationFilter jwtAuthenticationFilter;
+    private final JWTUtil jwtUtil;
+    private final ObjectMapper objectMapper;
 
     @Override
     public void configure(WebSecurity web) {
@@ -38,7 +40,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .authorizeRequests()
                 .antMatchers("/api/user/login").permitAll()
                 .and()
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(new JWTAuthenticationFilter(jwtUtil, objectMapper), UsernamePasswordAuthenticationFilter.class);
     }
 
     // CORS 허용 적용
