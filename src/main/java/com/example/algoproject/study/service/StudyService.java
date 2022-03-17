@@ -70,6 +70,7 @@ public class StudyService {
         return SuccessResponse.of(HttpStatus.OK, "멤버에게 스터디에 추가되었습니다.");
     }
 
+    @Transactional
     public List<MemberInfoResponse> getMembers(MemberListRequest request) {
 
         User owner = userRepository.findByName(request.getOwnerName()).orElseThrow(NotExistUserException::new);
@@ -88,6 +89,7 @@ public class StudyService {
         return getMemberList(belongs);
     }
 
+    @Transactional
     public StudyInfoResponse detail(String studyId) {
 
         Study study = studyRepository.findByStudyId(studyId).orElseThrow(NotExistStudyException::new);
