@@ -8,9 +8,9 @@ import javax.validation.constraints.NotBlank;
 public class UserProfileResponse {
 
     @NotBlank
-    String name;
+    private String name;
 
-    String url;
+    private String url;
 
     public UserProfileResponse(String name, String imageUrl) {
         this.name = name;

@@ -11,13 +11,13 @@ import java.util.List;
 public class StudyInfoResponse {
 
     @NotBlank
-    String name;
+    private String name;
 
     @NotBlank
-    String url;
+    private String url;
 
     @NotNull
-    List<MemberInfoResponse> members;
+    private List<MemberInfoResponse> members;
 
     public StudyInfoResponse(String name, String url, List<MemberInfoResponse> members) {
         this.name = name;

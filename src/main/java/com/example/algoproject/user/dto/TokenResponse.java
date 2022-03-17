@@ -1,10 +1,18 @@
 package com.example.algoproject.user.dto;
 
-import lombok.Getter;
+import lombok.Data;
 
-@Getter
+import javax.validation.constraints.NotBlank;
+
+@Data
 public class TokenResponse {
-    String access_token;
-    String scope;
-    String token_type;
+
+    @NotBlank
+    private String access_token;
+
+    @NotBlank
+    private String scope;
+
+    @NotBlank
+    private String token_type;
 }
