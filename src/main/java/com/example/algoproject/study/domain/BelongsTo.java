@@ -26,10 +26,10 @@ public class BelongsTo {
     @JoinColumn(name = "study_id")
     private Study study;
 
-    public BelongsTo(User member, Study study) {
-        this.member = member;
+    public BelongsTo(User leader, Study study, boolean accepted) {
+        this.member = leader;
         this.study = study;
-        this.accepted = false;
+        this.accepted = accepted;
     }
 
     public void acceptInvitation() {

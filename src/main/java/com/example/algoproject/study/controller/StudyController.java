@@ -4,6 +4,7 @@ import com.example.algoproject.errors.SuccessResponse;
 import com.example.algoproject.study.dto.AddMemberRequest;
 import com.example.algoproject.study.dto.MemberInfoResponse;
 import com.example.algoproject.study.dto.MemberListRequest;
+import com.example.algoproject.study.dto.StudyInfoResponse;
 import com.example.algoproject.study.service.StudyService;
 import com.example.algoproject.user.dto.CustomUserDetailsVO;
 import io.swagger.annotations.ApiOperation;
@@ -21,9 +22,9 @@ public class StudyController {
 
     private final StudyService studyService;
 
-    @ApiOperation(value="스터디 생성", notes="code와 message 반환")
+    @ApiOperation(value="스터디 생성", notes="studyId 반환")
     @PostMapping()
-    public SuccessResponse studyAdd(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @RequestParam @Valid String name) {
+    public String studyAdd(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @RequestParam @Valid String name) {
         return studyService.create(cudVO, name);
     }
 
@@ -37,5 +38,11 @@ public class StudyController {
     @GetMapping("/member/list")
     public List<MemberInfoResponse> memberList(@AuthenticationPrincipal @RequestBody @Valid MemberListRequest request) {
         return studyService.getMembers(request);
+    }
+
+    @ApiOperation(value="스터디 조회", notes="스터디의 정보룰 반환(스터디 이름, 레포지토리 주소, 멤버들의 목록)")
+    @GetMapping("/{studyId}")
+    public StudyInfoResponse studyDetails(@AuthenticationPrincipal @PathVariable("studyId") String studyId) {
+        return studyService.detail(studyId);
     }
 }
