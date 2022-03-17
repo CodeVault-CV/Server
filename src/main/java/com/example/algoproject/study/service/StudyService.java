@@ -33,7 +33,7 @@ public class StudyService {
     private final BelongsToRepository belongsToRepository;
 
     @Transactional
-    public SuccessResponse create(CustomUserDetailsVO cudVO, String repoName) {
+    public String create(CustomUserDetailsVO cudVO, String repoName) {
 
         User leader = userRepository.findByUserId(cudVO.getUsername()).orElseThrow(NotExistUserException::new);
         log.info("study name: " + repoName);
@@ -44,7 +44,10 @@ public class StudyService {
 
         studyRepository.save(new Study(response.get("id").toString(), response.get("name").toString(), cudVO.getUsername(), response.get("html_url").toString()));
 
-        return SuccessResponse.of(HttpStatus.CREATED, "스터디가 생성되었습니다.");
+        // 스터디 생성시 팀장을 스터디 멤버에 추가
+        belongsToRepository.save(new BelongsTo(leader, studyRepository.findByStudyId(response.get("id").toString()).get(), true));
+
+        return response.get("id").toString();
     }
 
     @Transactional
@@ -62,7 +65,7 @@ public class StudyService {
         // leader 가 github 에서 member 에게 study 레포지토리로 contributor 초대를 보냄
         addContributorResponse(leader, member, study);
 
-        belongsToRepository.save(new BelongsTo(member, study));
+        belongsToRepository.save(new BelongsTo(member, study, false));
 
         return SuccessResponse.of(HttpStatus.OK, "멤버에게 스터디에 추가되었습니다.");
     }
@@ -75,7 +78,7 @@ public class StudyService {
         Study study = studyRepository.findByName(request.getRepoName()).orElseThrow(NotExistStudyException::new);
         log.info("study name: " + study.getName());
 
-        // 스터디에 있는 사람들 중 아직 초대 받지 못한 사람이 있으면 github 에서 다시 갱신해옴
+        // 스터디에 있는 사람들 중 아직 초대 받지 않은 사람이 있으면 github 에서 다시 갱신해옴
         // 만약 다 초대를 받았다면 github 에서 갱신해오지 않는다
         List<BelongsTo> belongs = belongsToRepository.findByStudy(study);
 
@@ -84,6 +87,21 @@ public class StudyService {
 
         return getMemberList(belongs);
     }
+
+    public StudyInfoResponse detail(String studyId) {
+
+        Study study = studyRepository.findByStudyId(studyId).orElseThrow(NotExistStudyException::new);
+
+        List<BelongsTo> belongs = belongsToRepository.findByStudy(study);
+
+        List<MemberInfoResponse> members = getMemberList(belongs);
+
+        return new StudyInfoResponse(study.getName(), study.getRepositoryUrl(), members);
+    }
+
+    //
+    // private methods
+    //
 
     private Map<String, Object> createRepositoryResponse(User leader, String repoName) {
 
@@ -187,8 +205,10 @@ public class StudyService {
     private List<MemberInfoResponse> getMemberList(List<BelongsTo> belongs) {
         List<MemberInfoResponse> members = new ArrayList<>();
 
-        for (BelongsTo belongsTo : belongs)
-            members.add(new MemberInfoResponse(userRepository.findByUserId(belongsTo.getMember().getUserId()).get().getName(), belongsTo.isAccepted()));
+        for (BelongsTo belongsTo : belongs){
+            User user = userRepository.findByUserId(belongsTo.getMember().getUserId()).orElseThrow(NotExistUserException::new);
+            members.add(new MemberInfoResponse(user.getName(), user.getImageUrl(), belongsTo.isAccepted()));
+        }
 
         return members;
     }
