@@ -8,5 +8,5 @@ import javax.validation.constraints.NotBlank;
 public class AddContributorRequest {
 
     @NotBlank
-    String permission;
+    private String permission;
 }

@@ -12,7 +12,7 @@ public class MemberInfoResponse {
     private String name;
 
     @NotBlank
-    String url;
+    private String url;
 
     @NotNull
     private boolean accepted;

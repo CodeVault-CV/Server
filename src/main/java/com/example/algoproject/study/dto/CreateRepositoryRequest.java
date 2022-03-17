@@ -9,8 +9,8 @@ import javax.validation.constraints.NotNull;
 public class CreateRepositoryRequest {
 
     @NotBlank
-    String name;
+    private String name;
 
     @NotNull
-    boolean auto_init;
+    private boolean auto_init;
 }

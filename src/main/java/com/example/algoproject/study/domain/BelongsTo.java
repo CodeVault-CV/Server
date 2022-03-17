@@ -13,10 +13,10 @@ public class BelongsTo {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Long id;
+    private Long id;
 
     // 컨트리뷰터 초대의 수락 여부
-    boolean accepted;
+    private boolean accepted;
 
     @ManyToOne
     @JoinColumn(name = "member_id")

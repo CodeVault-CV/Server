@@ -12,13 +12,13 @@ public class Study {
 
     @Id
     @Column(name = "study_id")
-    String studyId;
+    private String studyId;
 
-    String name;
+    private String name;
 
-    String leaderId;
+    private String leaderId;
 
-    String repositoryUrl;
+    private String repositoryUrl;
 
     public Study(String studyId, String name, String leaderId, String repositoryUrl) {
         this.studyId = studyId;

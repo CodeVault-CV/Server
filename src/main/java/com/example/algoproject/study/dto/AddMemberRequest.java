@@ -8,8 +8,8 @@ import javax.validation.constraints.NotBlank;
 public class AddMemberRequest {
 
     @NotBlank
-    String memberName;
+    private String memberName;
 
     @NotBlank
-    String repoName;
+    private String repoName;
 }

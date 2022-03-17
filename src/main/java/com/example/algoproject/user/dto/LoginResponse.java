@@ -8,10 +8,10 @@ import javax.validation.constraints.NotBlank;
 public class LoginResponse {
 
     @NotBlank
-    String token;
+    private String token;
 
     @NotBlank
-    String name;
+    private String name;
 
     public LoginResponse(String token, String name) {
         this.token = token;
