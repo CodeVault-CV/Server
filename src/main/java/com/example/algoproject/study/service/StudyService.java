@@ -101,6 +101,16 @@ public class StudyService {
         return new StudyInfoResponse(study.getName(), study.getRepositoryUrl(), members);
     }
 
+    @Transactional
+    public List<Study> list(CustomUserDetailsVO cudVO) {
+
+        User user = userRepository.findByUserId(cudVO.getUsername()).orElseThrow(NotExistUserException::new);
+
+        List<BelongsTo> belongs = belongsToRepository.findByMember(user);
+
+        return getStudyList(belongs);
+    }
+
     //
     // private methods
     //
@@ -213,5 +223,15 @@ public class StudyService {
         }
 
         return members;
+    }
+
+    private List<Study> getStudyList(List<BelongsTo> belongs) {
+
+        List<Study> studyList = new ArrayList<>();
+
+        for (BelongsTo belongsTo : belongs)
+            studyList.add(belongsTo.getStudy());
+
+        return studyList;
     }
 }
