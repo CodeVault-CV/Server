@@ -1,6 +1,7 @@
 package com.example.algoproject.study.controller;
 
 import com.example.algoproject.errors.SuccessResponse;
+import com.example.algoproject.study.domain.Study;
 import com.example.algoproject.study.dto.AddMemberRequest;
 import com.example.algoproject.study.dto.MemberInfoResponse;
 import com.example.algoproject.study.dto.MemberListRequest;
@@ -44,5 +45,11 @@ public class StudyController {
     @GetMapping("/{studyId}")
     public StudyInfoResponse studyDetails(@AuthenticationPrincipal @PathVariable("studyId") String studyId) {
         return studyService.detail(studyId);
+    }
+
+    @ApiOperation(value = "스터디 목록", notes="사용자가 참여중인 스터디 목록을 반환")
+    @GetMapping("/list")
+    public List<Study> studyList(@AuthenticationPrincipal CustomUserDetailsVO cudVO) {
+        return studyService.list(cudVO);
     }
 }
