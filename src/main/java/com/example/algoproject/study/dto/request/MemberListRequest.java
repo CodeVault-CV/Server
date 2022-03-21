@@ -1,4 +1,4 @@
-package com.example.algoproject.study.dto;
+package com.example.algoproject.study.dto.request;
 
 import lombok.Data;
 
@@ -11,5 +11,5 @@ public class MemberListRequest {
     private String ownerName;
 
     @NotBlank
-    private String repoName;
+    private String studyId;
 }

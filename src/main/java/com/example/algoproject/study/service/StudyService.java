@@ -1,11 +1,12 @@
 package com.example.algoproject.study.service;
 
-import com.example.algoproject.errors.SuccessResponse;
 import com.example.algoproject.errors.exception.NotExistStudyException;
 import com.example.algoproject.errors.exception.NotExistUserException;
 import com.example.algoproject.study.domain.BelongsTo;
 import com.example.algoproject.study.domain.Study;
-import com.example.algoproject.study.dto.*;
+import com.example.algoproject.study.dto.request.*;
+import com.example.algoproject.study.dto.response.MemberInfoResponse;
+import com.example.algoproject.study.dto.response.StudyInfoResponse;
 import com.example.algoproject.study.repository.BelongsToRepository;
 import com.example.algoproject.study.repository.StudyRepository;
 import com.example.algoproject.user.domain.User;
@@ -33,25 +34,28 @@ public class StudyService {
     private final BelongsToRepository belongsToRepository;
 
     @Transactional
-    public String create(CustomUserDetailsVO cudVO, String repoName) {
+    public String create(CustomUserDetailsVO cudVO, CreateStudyRequest request) {
 
         User leader = userRepository.findByUserId(cudVO.getUsername()).orElseThrow(NotExistUserException::new);
-        log.info("study name: " + repoName);
+        log.info("study name: " + request.getStudyName());
+        log.info("repository name: " + request.getRepoName());
         log.info("leader name: " + leader.getName());
 
         // 팀장의 github 이름으로 repoName 이 이름인 레포지토리 생성
-        Map<String, Object> response = createRepositoryResponse(leader, repoName);
+        Map<String, Object> response = createRepositoryResponse(leader, request.getRepoName());
 
-        studyRepository.save(new Study(response.get("id").toString(), response.get("name").toString(), cudVO.getUsername(), response.get("html_url").toString()));
+        Study study = new Study(response.get("id").toString(), request.getStudyName(), cudVO.getUsername(), response.get("name").toString(), response.get("html_url").toString());
+
+        studyRepository.save(study);
 
         // 스터디 생성시 팀장을 스터디 멤버에 추가
-        belongsToRepository.save(new BelongsTo(leader, studyRepository.findByStudyId(response.get("id").toString()).get(), true));
+        belongsToRepository.save(new BelongsTo(leader, study, true));
 
         return response.get("id").toString();
     }
 
     @Transactional
-    public SuccessResponse addMember(CustomUserDetailsVO cudVO, AddMemberRequest request) {
+    public void addMember(CustomUserDetailsVO cudVO, AddMemberRequest request) {
 
         User leader = userRepository.findByUserId(cudVO.getUsername()).orElseThrow(NotExistUserException::new);
         log.info("leader name: " + leader.getName());
@@ -59,15 +63,13 @@ public class StudyService {
         User member = userRepository.findByName(request.getMemberName()).orElseThrow(NotExistUserException::new);
         log.info("member name: " + member.getName());
 
-        Study study = studyRepository.findByName(request.getRepoName()).orElseThrow(NotExistStudyException::new);
+        Study study = studyRepository.findByStudyId(request.getStudyId()).orElseThrow(NotExistStudyException::new);
         log.info("study name: " + study.getName());
 
         // leader 가 github 에서 member 에게 study 레포지토리로 contributor 초대를 보냄
         addContributorResponse(leader, member, study);
 
         belongsToRepository.save(new BelongsTo(member, study, false));
-
-        return SuccessResponse.of(HttpStatus.OK, "멤버에게 스터디에 추가되었습니다.");
     }
 
     @Transactional
@@ -76,7 +78,7 @@ public class StudyService {
         User owner = userRepository.findByName(request.getOwnerName()).orElseThrow(NotExistUserException::new);
         log.info("owner name: " + owner.getName());
 
-        Study study = studyRepository.findByName(request.getRepoName()).orElseThrow(NotExistStudyException::new);
+        Study study = studyRepository.findByStudyId(request.getStudyId()).orElseThrow(NotExistStudyException::new);
         log.info("study name: " + study.getName());
 
         // 스터디에 있는 사람들 중 아직 초대 받지 않은 사람이 있으면 github 에서 다시 갱신해옴
@@ -159,7 +161,7 @@ public class StudyService {
         RestTemplate restTemplate = new RestTemplate();
 
         ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
-                "https://api.github.com/repos/" + leader.getName() + "/" + study.getName() + "/collaborators/" + member.getName(),
+                "https://api.github.com/repos/" + leader.getName() + "/" + study.getRepositoryName() + "/collaborators/" + member.getName(),
                 HttpMethod.PUT,
                 entity,
                 new ParameterizedTypeReference<>() {
@@ -182,7 +184,7 @@ public class StudyService {
         RestTemplate restTemplate = new RestTemplate();
 
         ResponseEntity<List<Map<String, Object>>> response = restTemplate.exchange(
-                "https://api.github.com/repos/" + owner.getName() + "/" + study.getName() + "/collaborators",
+                "https://api.github.com/repos/" + owner.getName() + "/" + study.getRepositoryName() + "/collaborators",
                 HttpMethod.GET,
                 entity,
                 new ParameterizedTypeReference<>() {
@@ -218,7 +220,7 @@ public class StudyService {
         List<MemberInfoResponse> members = new ArrayList<>();
 
         for (BelongsTo belongsTo : belongs){
-            User user = userRepository.findByUserId(belongsTo.getMember().getUserId()).orElseThrow(NotExistUserException::new);
+            User user = belongsTo.getMember();
             members.add(new MemberInfoResponse(user.getName(), user.getImageUrl(), belongsTo.isAccepted()));
         }
 
