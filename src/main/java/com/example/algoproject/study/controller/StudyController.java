@@ -2,14 +2,16 @@ package com.example.algoproject.study.controller;
 
 import com.example.algoproject.errors.SuccessResponse;
 import com.example.algoproject.study.domain.Study;
-import com.example.algoproject.study.dto.AddMemberRequest;
-import com.example.algoproject.study.dto.MemberInfoResponse;
-import com.example.algoproject.study.dto.MemberListRequest;
-import com.example.algoproject.study.dto.StudyInfoResponse;
+import com.example.algoproject.study.dto.request.AddMemberRequest;
+import com.example.algoproject.study.dto.request.CreateStudyRequest;
+import com.example.algoproject.study.dto.response.MemberInfoResponse;
+import com.example.algoproject.study.dto.request.MemberListRequest;
+import com.example.algoproject.study.dto.response.StudyInfoResponse;
 import com.example.algoproject.study.service.StudyService;
 import com.example.algoproject.user.dto.CustomUserDetailsVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,14 +27,15 @@ public class StudyController {
 
     @ApiOperation(value="스터디 생성", notes="studyId 반환")
     @PostMapping()
-    public String studyAdd(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @RequestParam @Valid String name) {
-        return studyService.create(cudVO, name);
+    public String studyAdd(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @RequestBody @Valid CreateStudyRequest request) {
+        return studyService.create(cudVO, request);
     }
 
     @ApiOperation(value="멤버 추가", notes="code와 message 반환")
     @PostMapping("/member")
     public SuccessResponse memberAdd(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @RequestBody @Valid AddMemberRequest request) {
-        return studyService.addMember(cudVO, request);
+        studyService.addMember(cudVO, request);
+        return SuccessResponse.of(HttpStatus.OK, "멤버에게 스터디에 추가되었습니다.");
     }
 
     @ApiOperation(value="멤버 조회", notes="스터디에 참여중인 멤버 리스트 반환")

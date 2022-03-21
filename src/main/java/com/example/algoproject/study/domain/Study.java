@@ -18,12 +18,15 @@ public class Study {
 
     private String leaderId;
 
+    private String repositoryName;
+
     private String repositoryUrl;
 
-    public Study(String studyId, String name, String leaderId, String repositoryUrl) {
+    public Study(String studyId, String name, String leaderId, String repositoryName, String repositoryUrl) {
         this.studyId = studyId;
         this.name = name;
         this.leaderId = leaderId;
+        this.repositoryName = repositoryName;
         this.repositoryUrl = repositoryUrl;
     }
 }

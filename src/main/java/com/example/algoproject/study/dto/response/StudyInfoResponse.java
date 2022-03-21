@@ -1,4 +1,4 @@
-package com.example.algoproject.study.dto;
+package com.example.algoproject.study.dto.response;
 
 
 import lombok.Data;
