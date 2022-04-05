@@ -39,6 +39,10 @@ dependencies {
 
 	//aws
 	implementation 'io.awspring.cloud:spring-cloud-starter-aws:2.3.1'
+
+	//file
+	implementation group: 'commons-fileupload', name: 'commons-fileupload', version: '1.4'
+	implementation group: 'commons-io', name: 'commons-io', version: '2.4'
 }
 
 tasks.named('test') {
