@@ -10,5 +10,6 @@ import java.util.Optional;
 @Repository
 public interface SolutionRepository extends JpaRepository<Solution, Long> {
 
-//    Optional<Solution> findByUserIdAndProblemNo(User userId, String ProblemNo);
+    //    Optional<Solution> findByUserIdAndProblemNo(User userId, String ProblemNo);
+    Optional<Solution> findByUserId(User userId);
 }
