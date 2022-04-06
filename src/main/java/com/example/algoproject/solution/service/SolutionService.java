@@ -3,7 +3,9 @@ package com.example.algoproject.solution.service;
 import com.example.algoproject.errors.SuccessResponse;
 import com.example.algoproject.errors.exception.NotExistUserException;
 import com.example.algoproject.s3.S3Uploader;
+import com.example.algoproject.solution.domain.Solution;
 import com.example.algoproject.solution.dto.CommitFileRequest;
+import com.example.algoproject.solution.dto.S3UrlResponse;
 import com.example.algoproject.solution.repository.SolutionRepository;
 import com.example.algoproject.user.domain.User;
 import com.example.algoproject.user.dto.CustomUserDetailsVO;
@@ -20,8 +22,8 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.util.Base64;
-import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
@@ -39,9 +41,11 @@ public class SolutionService {
                                   String header, String content, String time, String memory) throws IOException {
 
         User user = userRepository.findByUserId(cudVO.getUsername()).orElseThrow(NotExistUserException::new);
-//        String folderPath = "problemNo/Johoseong";
+
         String gitHubPath = pathUtil.makeGitHubPath("corpName", code.getOriginalFilename(), "probName", user.getName());
         String s3Path = pathUtil.makeS3Path("repoName", "corpName", code.getOriginalFilename(), "probName", user.getName());
+
+        Long date = System.currentTimeMillis();
 
         /* readme file 생성 메소드 */
         MultipartFile readMe = readMeUtil.makeReadMe(header, content);
@@ -51,26 +55,27 @@ public class SolutionService {
         checkFileResponse(readMe, user, gitHubPath, "BOJ_algorithm_study", "");
 
         /* s3에 file upload */
-        String s3CodeUrl = s3Uploader.upload(code, s3Path); // s3에 저장
-//        String s3ReadMeUrl = s3Uploader.upload(readMe, s3Path + )
+        String codeUrl = s3Uploader.upload(code, s3Path);
+        String readMeUrl = s3Uploader.upload(readMe, s3Path);
         log.info("s3 path : " + s3Path);
 
         /* local 리드미 삭제 */
         readMeUtil.removeReadMe(readMe);
 
+        /* DB에 저장 */
+        solutionRepository.save(new Solution(user, codeUrl, readMeUrl, new Timestamp(date), time, memory));
+
         return SuccessResponse.of(HttpStatus.OK, "코드와 리드미 파일이 정상적으로 업로드 되었습니다..");
     }
 
-//    public String getCodeFile(CustomUserDetailsVO cudVO, String problemNo) throws IOException {
-//
-//        User user = userRepository.findByUserId(cudVO.getUsername()).orElseThrow(NotExistUserException::new);
+    public S3UrlResponse getFileUrl(CustomUserDetailsVO cudVO, String problemNo) throws IOException {
+
+        User user = userRepository.findByUserId(cudVO.getUsername()).orElseThrow(NotExistUserException::new);
 //        Solution solution = solutionRepository.findByUserIdAndProblemNo(user, problemNo).orElseThrow(NotExistUserException::new);
-//
-//        String folder = solution.getProblemNo(); // 문제번호 == 폴더명
-//        String fileName = solution.getFileName(); // uuid + 파일명
-//
-//        return s3Uploader.readS3(folder, fileName);
-//    }
+        Solution solution = solutionRepository.findByUserId(user).orElseThrow(NotExistUserException::new);
+
+        return new S3UrlResponse(solution.getCodeUrl(), solution.getReadMeUrl());
+    }
 
     /*
     private method

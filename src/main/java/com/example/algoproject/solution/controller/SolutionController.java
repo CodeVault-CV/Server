@@ -1,6 +1,8 @@
 package com.example.algoproject.solution.controller;
 
+import com.example.algoproject.errors.SuccessResponse;
 import com.example.algoproject.s3.S3Uploader;
+import com.example.algoproject.solution.dto.S3UrlResponse;
 import com.example.algoproject.solution.service.SolutionService;
 import com.example.algoproject.user.dto.CustomUserDetailsVO;
 import io.swagger.annotations.ApiOperation;
@@ -16,31 +18,22 @@ import java.io.IOException;
 @RestController
 public class SolutionController {
 
-    private final S3Uploader s3Uploader;
     private final SolutionService solutionService;
 
-    //@RequestParam("problem_no") String problemNo, @RequestParam("code") MultipartFile multipartFile
-    @ApiOperation(value="코드파일 업로드", notes="")
-    @PostMapping("/code/upload")
-    public String uploadCode(@AuthenticationPrincipal CustomUserDetailsVO cudVO,
-                             @RequestParam("code") MultipartFile multipartFile,
-                             @RequestParam("header") String header, @RequestParam("content") String content,
-                             @RequestParam("time") String time, @RequestParam("memory") String memory) throws IOException {
-        solutionService.upload(cudVO, multipartFile, header, content, time, memory);
-
-        return "success";
+    @ApiOperation(value="솔루션 조회", notes="제출한 풀이 있으면 풀이 s3 링크 반환. 없으면 null")
+    @GetMapping("/disp")
+    public S3UrlResponse dispProblem(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @RequestParam("problemNo") String problemNo) throws IOException {
+        return solutionService.getFileUrl(cudVO, problemNo);
     }
 
-//    @ApiOperation(value="코드파일 조회", notes="")
-//    @GetMapping("/code")
-//    public String displayCode(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @RequestParam("problem_no") String problemNo) throws IOException {
-//        solutionService.getCodeFile(cudVO, problemNo);
-//        return "test2";
-//    }
+    //@RequestParam("problemNo") String problemNo
+    @ApiOperation(value="솔루션 업로드", notes="code와 message 반환")
+    @PostMapping("/upload")
+    public SuccessResponse uploadCode(@AuthenticationPrincipal CustomUserDetailsVO cudVO,
+                                      @RequestParam("code") MultipartFile multipartFile,
+                                      @RequestParam("header") String header, @RequestParam("content") String content,
+                                      @RequestParam("time") String time, @RequestParam("memory") String memory) throws IOException {
 
-//    @ApiOperation(value="리드미 조회", notes="")
-//    @PostMapping("/readme")
-//    public String dispReadMe(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @RequestParam("problem_no") Long problemNo) {
-//
-//    }
+        return solutionService.upload(cudVO, multipartFile, header, content, time, memory);
+    }
 }
