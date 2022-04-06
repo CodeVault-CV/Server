@@ -11,12 +11,17 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     @ExceptionHandler(NotExistUserException.class)
-    ResponseEntity<ErrorResponse> handleAlreadyExistEmail(NotExistUserException ex) {
+    ResponseEntity<ErrorResponse> handleNotExistUser(NotExistUserException ex) {
         return handleBadRequest(ex);
     }
 
     @ExceptionHandler(NotExistStudyException.class)
-    ResponseEntity<ErrorResponse> handleAlreadyExistStudy(NotExistStudyException ex) {
+    ResponseEntity<ErrorResponse> handleNotExistStudy(NotExistStudyException ex) {
+        return handleBadRequest(ex);
+    }
+
+    @ExceptionHandler(NotExistProblemException.class)
+    ResponseEntity<ErrorResponse> handleNotExistProblem(NotExistProblemException ex) {
         return handleBadRequest(ex);
     }
 

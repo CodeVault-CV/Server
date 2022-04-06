@@ -5,7 +5,7 @@ import lombok.Data;
 import javax.validation.constraints.NotBlank;
 
 @Data
-public class CreateStudyRequest {
+public class CreateStudy {
 
     @NotBlank(message = "스터디 이름은 필수 입력값입니다.")
     String studyName;

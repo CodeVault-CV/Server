@@ -3,10 +3,9 @@ package com.example.algoproject.user.service;
 import com.example.algoproject.errors.exception.NotExistUserException;
 import com.example.algoproject.s3.S3Uploader;
 import com.example.algoproject.user.domain.User;
-import com.example.algoproject.user.dto.CustomUserDetailsVO;
-import com.example.algoproject.user.dto.LoginResponse;
-import com.example.algoproject.user.dto.TokenResponse;
-import com.example.algoproject.user.dto.UserProfileResponse;
+import com.example.algoproject.user.dto.LoginDto;
+import com.example.algoproject.user.dto.TokenDto;
+import com.example.algoproject.user.dto.UserInfo;
 import com.example.algoproject.user.repository.UserRepository;
 import com.example.algoproject.security.JWTUtil;
 import lombok.RequiredArgsConstructor;
@@ -19,9 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 
@@ -41,37 +38,37 @@ public class UserService {
     private String clientSecret;
 
     @Transactional
-    public LoginResponse login(String code) {
+    public LoginDto login(String code) {
 
         // {code} 를 이용해 Github 에 access_token 요청
-        TokenResponse tokenResponse = accessTokenResponse(code);
+        TokenDto tokenDto = accessTokenResponse(code);
 
         // 받은 access_token 으로 Github 에 사용자 정보 요청
-        Map<String, Object> userInfoResponse = userInfoResponse(tokenResponse.getAccess_token());
+        Map<String, Object> userInfoResponse = userInfoResponse(tokenDto.getAccess_token());
 
         Optional<User> user = userRepository.findByUserId(userInfoResponse.get("id").toString());
 
         if (user.isEmpty()) {
             log.info("Add new user to database... " + userInfoResponse.get("login"));
-            userRepository.save(new User(userInfoResponse.get("id").toString(), userInfoResponse.get("login").toString(), tokenResponse.getAccess_token(), userInfoResponse.get("avatar_url").toString()));
+            userRepository.save(new User(userInfoResponse.get("id").toString(), userInfoResponse.get("login").toString(), tokenDto.getAccess_token(), userInfoResponse.get("avatar_url").toString()));
         }
         else {
             log.info(user.get().getName() + " User already exists. Renew User Name & Access Token...");
             // 유저의 이름과 프로필 사진이 변경되었을 수도 있기 때문에 accessToken 과 같이 갱신해 준다
-            user.get().update(tokenResponse.getAccess_token(), userInfoResponse.get("login").toString(), userInfoResponse.get("avatar_url").toString());
+            user.get().update(tokenDto.getAccess_token(), userInfoResponse.get("login").toString(), userInfoResponse.get("avatar_url").toString());
             userRepository.save(user.get());
         }
 
-        return new LoginResponse(jwtUtil.makeJWT(userInfoResponse.get("id").toString()), userInfoResponse.get("login").toString());
+        return new LoginDto(jwtUtil.makeJWT(userInfoResponse.get("id").toString()), userInfoResponse.get("login").toString());
     }
 
     @Transactional
-    public UserProfileResponse profile(String name) {
+    public UserInfo profile(String name) {
         User user = userRepository.findByName(name).orElseThrow(NotExistUserException::new);
-        return new UserProfileResponse(user.getName(), user.getImageUrl());
+        return new UserInfo(user.getName(), user.getImageUrl());
     }
 
-    private TokenResponse accessTokenResponse(String code) {
+    private TokenDto accessTokenResponse(String code) {
 
         HttpHeaders headers = new HttpHeaders();
         headers.add("Accept", "application/json");
@@ -86,11 +83,11 @@ public class UserService {
 
         RestTemplate restTemplate = new RestTemplate();
 
-        ResponseEntity<TokenResponse> response = restTemplate.exchange(
+        ResponseEntity<TokenDto> response = restTemplate.exchange(
                 "https://github.com/login/oauth/access_token",
                 HttpMethod.POST,
                 entity,
-                TokenResponse.class
+                TokenDto.class
         );
 
         return response.getBody();

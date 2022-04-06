@@ -5,7 +5,7 @@ import lombok.Data;
 import javax.validation.constraints.NotBlank;
 
 @Data
-public class LoginResponse {
+public class LoginDto {
 
     @NotBlank
     private String token;
@@ -13,7 +13,7 @@ public class LoginResponse {
     @NotBlank
     private String name;
 
-    public LoginResponse(String token, String name) {
+    public LoginDto(String token, String name) {
         this.token = token;
         this.name = name;
     }

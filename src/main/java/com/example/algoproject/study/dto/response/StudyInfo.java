@@ -8,7 +8,7 @@ import javax.validation.constraints.NotNull;
 import java.util.List;
 
 @Data
-public class StudyInfoResponse {
+public class StudyInfo {
 
     @NotBlank
     private String name;
@@ -17,9 +17,9 @@ public class StudyInfoResponse {
     private String url;
 
     @NotNull
-    private List<MemberInfoResponse> members;
+    private List<MemberInfo> members;
 
-    public StudyInfoResponse(String name, String url, List<MemberInfoResponse> members) {
+    public StudyInfo(String name, String url, List<MemberInfo> members) {
         this.name = name;
         this.url = url;
         this.members = members;

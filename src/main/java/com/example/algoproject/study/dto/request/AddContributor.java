@@ -5,7 +5,7 @@ import lombok.Data;
 import javax.validation.constraints.NotBlank;
 
 @Data
-public class AddContributorRequest {
+public class AddContributor {
 
     @NotBlank
     private String permission;

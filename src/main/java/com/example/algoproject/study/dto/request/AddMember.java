@@ -5,10 +5,10 @@ import lombok.Data;
 import javax.validation.constraints.NotBlank;
 
 @Data
-public class MemberListRequest {
+public class AddMember {
 
     @NotBlank
-    private String ownerName;
+    private String memberName;
 
     @NotBlank
     private String studyId;
