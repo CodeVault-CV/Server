@@ -5,8 +5,8 @@ import com.example.algoproject.errors.exception.NotExistUserException;
 import com.example.algoproject.study.domain.BelongsTo;
 import com.example.algoproject.study.domain.Study;
 import com.example.algoproject.study.dto.request.*;
-import com.example.algoproject.study.dto.response.MemberInfoResponse;
-import com.example.algoproject.study.dto.response.StudyInfoResponse;
+import com.example.algoproject.study.dto.response.MemberInfo;
+import com.example.algoproject.study.dto.response.StudyInfo;
 import com.example.algoproject.study.repository.BelongsToRepository;
 import com.example.algoproject.study.repository.StudyRepository;
 import com.example.algoproject.user.domain.User;
@@ -34,7 +34,7 @@ public class StudyService {
     private final BelongsToRepository belongsToRepository;
 
     @Transactional
-    public String create(CustomUserDetailsVO cudVO, CreateStudyRequest request) {
+    public String create(CustomUserDetailsVO cudVO, CreateStudy request) {
 
         User leader = userRepository.findByUserId(cudVO.getUsername()).orElseThrow(NotExistUserException::new);
         log.info("study name: " + request.getStudyName());
@@ -55,7 +55,7 @@ public class StudyService {
     }
 
     @Transactional
-    public void addMember(CustomUserDetailsVO cudVO, AddMemberRequest request) {
+    public void addMember(CustomUserDetailsVO cudVO, AddMember request) {
 
         User leader = userRepository.findByUserId(cudVO.getUsername()).orElseThrow(NotExistUserException::new);
         log.info("leader name: " + leader.getName());
@@ -73,7 +73,7 @@ public class StudyService {
     }
 
     @Transactional
-    public List<MemberInfoResponse> getMembers(MemberListRequest request) {
+    public List<MemberInfo> getMembers(MemberList request) {
 
         User owner = userRepository.findByName(request.getOwnerName()).orElseThrow(NotExistUserException::new);
         log.info("owner name: " + owner.getName());
@@ -92,15 +92,15 @@ public class StudyService {
     }
 
     @Transactional
-    public StudyInfoResponse detail(String studyId) {
+    public StudyInfo detail(String studyId) {
 
         Study study = studyRepository.findByStudyId(studyId).orElseThrow(NotExistStudyException::new);
 
         List<BelongsTo> belongs = belongsToRepository.findByStudy(study);
 
-        List<MemberInfoResponse> members = getMemberList(belongs);
+        List<MemberInfo> members = getMemberList(belongs);
 
-        return new StudyInfoResponse(study.getName(), study.getRepositoryUrl(), members);
+        return new StudyInfo(study.getName(), study.getRepositoryUrl(), members);
     }
 
     @Transactional
@@ -111,6 +111,16 @@ public class StudyService {
         List<BelongsTo> belongs = belongsToRepository.findByMember(user);
 
         return getStudyList(belongs);
+    }
+
+    @Transactional
+    public Study getStydy(String studyId) {
+        return studyRepository.findByStudyId(studyId).orElseThrow(NotExistStudyException::new);
+    }
+
+    @Transactional
+    public void save(Study study) {
+        studyRepository.save(study);
     }
 
     //
@@ -124,11 +134,11 @@ public class StudyService {
         headers.add("Authorization", "token " + leader.getAccessToken());
         headers.add("Accept", "application/vnd.github.v3+json");
 
-        CreateRepositoryRequest request = new CreateRepositoryRequest();
+        CreateRepository request = new CreateRepository();
         request.setName(repoName);
         request.setAuto_init(true);
 
-        HttpEntity<CreateRepositoryRequest> entity = new HttpEntity<>(request, headers);
+        HttpEntity<CreateRepository> entity = new HttpEntity<>(request, headers);
 
         RestTemplate restTemplate = new RestTemplate();
 
@@ -153,10 +163,10 @@ public class StudyService {
         headers.add("User-Agent", "api-test");
         headers.add("Authorization", "token " + leader.getAccessToken());
 
-        AddContributorRequest request = new AddContributorRequest();
+        AddContributor request = new AddContributor();
         request.setPermission("admin");
 
-        HttpEntity<AddContributorRequest> entity = new HttpEntity<>(request, headers);
+        HttpEntity<AddContributor> entity = new HttpEntity<>(request, headers);
 
         RestTemplate restTemplate = new RestTemplate();
 
@@ -216,12 +226,12 @@ public class StudyService {
                 }
     }
 
-    private List<MemberInfoResponse> getMemberList(List<BelongsTo> belongs) {
-        List<MemberInfoResponse> members = new ArrayList<>();
+    private List<MemberInfo> getMemberList(List<BelongsTo> belongs) {
+        List<MemberInfo> members = new ArrayList<>();
 
         for (BelongsTo belongsTo : belongs){
             User user = belongsTo.getMember();
-            members.add(new MemberInfoResponse(user.getName(), user.getImageUrl(), belongsTo.isAccepted()));
+            members.add(new MemberInfo(user.getName(), user.getImageUrl(), belongsTo.isAccepted()));
         }
 
         return members;

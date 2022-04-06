@@ -6,7 +6,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 @Data
-public class CreateRepositoryRequest {
+public class CreateRepository {
 
     @NotBlank
     private String name;

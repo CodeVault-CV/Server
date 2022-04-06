@@ -5,14 +5,14 @@ import lombok.Data;
 import javax.validation.constraints.NotBlank;
 
 @Data
-public class UserProfileResponse {
+public class UserInfo {
 
     @NotBlank
     private String name;
 
     private String url;
 
-    public UserProfileResponse(String name, String imageUrl) {
+    public UserInfo(String name, String imageUrl) {
         this.name = name;
         this.url = imageUrl;
     }
