@@ -1,6 +1,7 @@
 package com.example.algoproject.solution.dto;
 
 import lombok.Data;
+import org.springframework.lang.Nullable;
 
 import javax.validation.constraints.NotBlank;
 
@@ -12,6 +13,7 @@ public class CommitFileRequest {
 
     @NotBlank
     private String content;
-    // sha는 null 일 수도 있음
+
+    @Nullable
     private String sha;
 }
