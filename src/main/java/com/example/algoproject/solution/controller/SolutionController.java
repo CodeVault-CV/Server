@@ -2,11 +2,13 @@ package com.example.algoproject.solution.controller;
 
 import com.example.algoproject.errors.SuccessResponse;
 import com.example.algoproject.s3.S3Uploader;
+import com.example.algoproject.solution.dto.AddSolution;
 import com.example.algoproject.solution.dto.S3UrlResponse;
 import com.example.algoproject.solution.service.SolutionService;
 import com.example.algoproject.user.dto.CustomUserDetailsVO;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,20 +22,17 @@ public class SolutionController {
 
     private final SolutionService solutionService;
 
-    @ApiOperation(value="솔루션 조회", notes="제출한 풀이 있으면 풀이 s3 링크 반환. 없으면 null")
+    @ApiOperation(value="솔루션 조회", notes="제출한 솔루션 있으면 코드&리드미 파일 올라가 있는 s3 링크 반환. 없으면 null")
     @GetMapping("/disp")
-    public S3UrlResponse dispProblem(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @RequestParam("problemNo") String problemNo) throws IOException {
-        return solutionService.getFileUrl(cudVO, problemNo);
+    public S3UrlResponse displaySolution(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @RequestParam("problemId") Long problemId) throws IOException {
+        return solutionService.getFileUrl(cudVO, problemId);
     }
 
-    //@RequestParam("problemNo") String problemNo
     @ApiOperation(value="솔루션 업로드", notes="code와 message 반환")
-    @PostMapping("/upload")
-    public SuccessResponse uploadCode(@AuthenticationPrincipal CustomUserDetailsVO cudVO,
-                                      @RequestParam("code") MultipartFile multipartFile,
-                                      @RequestParam("header") String header, @RequestParam("content") String content,
-                                      @RequestParam("time") String time, @RequestParam("memory") String memory) throws IOException {
+    @PostMapping(value="/upload", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    public SuccessResponse upload(@AuthenticationPrincipal CustomUserDetailsVO cudVO,
+                                  @RequestPart AddSolution solution, @RequestPart MultipartFile code) throws IOException {
 
-        return solutionService.upload(cudVO, multipartFile, header, content, time, memory);
+        return solutionService.upload(cudVO, solution, code);
     }
 }

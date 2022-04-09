@@ -1,12 +1,20 @@
 package com.example.algoproject.solution.service;
 
 import com.example.algoproject.errors.SuccessResponse;
+import com.example.algoproject.errors.exception.NotExistProblemException;
+import com.example.algoproject.errors.exception.NotExistSolutionException;
+import com.example.algoproject.errors.exception.NotExistStudyException;
 import com.example.algoproject.errors.exception.NotExistUserException;
+import com.example.algoproject.problem.domain.Problem;
+import com.example.algoproject.problem.repository.ProblemRepository;
 import com.example.algoproject.s3.S3Uploader;
 import com.example.algoproject.solution.domain.Solution;
+import com.example.algoproject.solution.dto.AddSolution;
 import com.example.algoproject.solution.dto.CommitFileRequest;
 import com.example.algoproject.solution.dto.S3UrlResponse;
 import com.example.algoproject.solution.repository.SolutionRepository;
+import com.example.algoproject.study.domain.Study;
+import com.example.algoproject.study.repository.StudyRepository;
 import com.example.algoproject.user.domain.User;
 import com.example.algoproject.user.dto.CustomUserDetailsVO;
 import com.example.algoproject.user.repository.UserRepository;
@@ -33,46 +41,52 @@ public class SolutionService {
 
     private final UserRepository userRepository;
     private final SolutionRepository solutionRepository;
+    private final ProblemRepository problemRepository;
+    private final StudyRepository studyRepository;
     private final S3Uploader s3Uploader;
     private final PathUtil pathUtil;
     private final ReadMeUtil readMeUtil;
 
-    public SuccessResponse upload(CustomUserDetailsVO cudVO, MultipartFile code,
-                                  String header, String content, String time, String memory) throws IOException {
+    public SuccessResponse upload(CustomUserDetailsVO cudVO, AddSolution addSolution, MultipartFile code) throws IOException {
 
         User user = userRepository.findByUserId(cudVO.getUsername()).orElseThrow(NotExistUserException::new);
+        Problem problem = problemRepository.findById(addSolution.getProblemId()).orElseThrow(NotExistProblemException::new);
+        Study study = studyRepository.findByStudyId(problem.getStudy().getStudyId()).orElseThrow(NotExistStudyException::new);
 
-        String gitHubPath = pathUtil.makeGitHubPath("corpName", code.getOriginalFilename(), "probName", user.getName());
-        String s3Path = pathUtil.makeS3Path("repoName", "corpName", code.getOriginalFilename(), "probName", user.getName());
+        String gitHubPath = pathUtil.makeGitHubPath(problem, user.getName());
+        String s3Path = pathUtil.makeS3Path(study.getRepositoryName(), problem, user.getName());
+
+        log.info("github repository path : " + gitHubPath);
+        log.info("s3 repository path : " + s3Path);
 
         Long date = System.currentTimeMillis();
 
         /* readme file 생성 메소드 */
-        MultipartFile readMe = readMeUtil.makeReadMe(header, content);
+        MultipartFile readMe = readMeUtil.makeReadMe(addSolution.getHeader(), addSolution.getContent());
 
         /* github에 file commit */
-        checkFileResponse(code, user, gitHubPath, "BOJ_algorithm_study", "");
-        checkFileResponse(readMe, user, gitHubPath, "BOJ_algorithm_study", "");
+        checkFileResponse(code, user, gitHubPath, study.getRepositoryName(), "");
+        checkFileResponse(readMe, user, gitHubPath, study.getRepositoryName(), "");
 
         /* s3에 file upload */
         String codeUrl = s3Uploader.upload(code, s3Path);
         String readMeUrl = s3Uploader.upload(readMe, s3Path);
-        log.info("s3 path : " + s3Path);
 
         /* local 리드미 삭제 */
         readMeUtil.removeReadMe(readMe);
 
         /* DB에 저장 */
-        solutionRepository.save(new Solution(user, codeUrl, readMeUrl, new Timestamp(date), time, memory));
+        solutionRepository.save(new Solution(user, problem, codeUrl, readMeUrl, new Timestamp(date), addSolution.getTime(), addSolution.getMemory()));
 
         return SuccessResponse.of(HttpStatus.OK, "코드와 리드미 파일이 정상적으로 업로드 되었습니다..");
     }
 
-    public S3UrlResponse getFileUrl(CustomUserDetailsVO cudVO, String problemNo) throws IOException {
+    public S3UrlResponse getFileUrl(CustomUserDetailsVO cudVO, Long problemId) throws IOException {
 
         User user = userRepository.findByUserId(cudVO.getUsername()).orElseThrow(NotExistUserException::new);
-//        Solution solution = solutionRepository.findByUserIdAndProblemNo(user, problemNo).orElseThrow(NotExistUserException::new);
-        Solution solution = solutionRepository.findByUserId(user).orElseThrow(NotExistUserException::new);
+
+        Problem problem = problemRepository.findById(problemId).orElseThrow(NotExistProblemException::new);
+        Solution solution = solutionRepository.findByUserIdAndProblemId(user, problem).orElseThrow(NotExistSolutionException::new);
 
         return new S3UrlResponse(solution.getCodeUrl(), solution.getReadMeUrl());
     }
