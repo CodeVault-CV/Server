@@ -28,12 +28,10 @@ public class SolutionController {
 
     //@RequestParam("problemNo") String problemNo
     @ApiOperation(value="솔루션 업로드", notes="code와 message 반환")
-    @PostMapping("/upload")
-    public SuccessResponse uploadCode(@AuthenticationPrincipal CustomUserDetailsVO cudVO,
-                                      @RequestParam("code") MultipartFile multipartFile,
-                                      @RequestParam("header") String header, @RequestParam("content") String content,
-                                      @RequestParam("time") String time, @RequestParam("memory") String memory) throws IOException {
+    @PostMapping(value="/upload", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    public SuccessResponse upload(@AuthenticationPrincipal CustomUserDetailsVO cudVO,
+                                  @RequestPart AddSolution solution, @RequestPart MultipartFile code) throws IOException {
 
-        return solutionService.upload(cudVO, multipartFile, header, content, time, memory);
+        return solutionService.upload(cudVO, solution, code);
     }
 }
