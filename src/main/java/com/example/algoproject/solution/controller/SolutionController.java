@@ -24,7 +24,7 @@ public class SolutionController {
 
     @ApiOperation(value="솔루션 조회", notes="제출한 솔루션 있으면 코드&리드미 파일 올라가 있는 s3 링크 반환. 없으면 null")
     @GetMapping("/disp")
-    public S3UrlResponse displaySolution(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @RequestParam("problemIo") Long problemId) throws IOException {
+    public S3UrlResponse displaySolution(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @RequestParam("problemId") Long problemId) throws IOException {
         return solutionService.getFileUrl(cudVO, problemId);
     }
 

@@ -81,7 +81,7 @@ public class SolutionService {
         return SuccessResponse.of(HttpStatus.OK, "코드와 리드미 파일이 정상적으로 업로드 되었습니다..");
     }
 
-    public S3UrlResponse getFileUrl(CustomUserDetailsVO cudVO, String problemNo) throws IOException {
+    public S3UrlResponse getFileUrl(CustomUserDetailsVO cudVO, Long problemId) throws IOException {
 
         User user = userRepository.findByUserId(cudVO.getUsername()).orElseThrow(NotExistUserException::new);
 
