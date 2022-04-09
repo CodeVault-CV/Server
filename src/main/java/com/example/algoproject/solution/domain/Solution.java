@@ -1,8 +1,8 @@
 package com.example.algoproject.solution.domain;
 
+import com.example.algoproject.problem.domain.Problem;
 import com.example.algoproject.user.domain.User;
 import lombok.Data;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
@@ -21,9 +21,9 @@ public class Solution {
     @JoinColumn(name = "user_id")
     private User userId;
 
-//    @ManyToOne
-//    @JoinColumn(name = "problem_id")
-//    private Problem problemNo;
+    @ManyToOne
+    @JoinColumn(name = "problem_id")
+    private Problem problemId;
 
     private String codeUrl;
 
@@ -35,8 +35,9 @@ public class Solution {
 
     private String memory; //공간복잡도
 
-    public Solution(User userId, String codeUrl, String readMeUrl, Timestamp date, String time, String memory) {
+    public Solution(User userId, Problem problemId, String codeUrl, String readMeUrl, Timestamp date, String time, String memory) {
         this.userId = userId;
+        this.problemId = problemId;
         this.codeUrl = codeUrl;
         this.readMeUrl = readMeUrl;
         this.date = date;
