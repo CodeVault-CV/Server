@@ -1,6 +1,6 @@
-package com.example.algoproject.study.repository;
+package com.example.algoproject.belongsto.repository;
 
-import com.example.algoproject.study.domain.BelongsTo;
+import com.example.algoproject.belongsto.domain.BelongsTo;
 import com.example.algoproject.study.domain.Study;
 import com.example.algoproject.user.domain.User;
 import org.springframework.data.jpa.repository.JpaRepository;

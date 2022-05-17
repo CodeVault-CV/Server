@@ -54,7 +54,7 @@ public class JWTUtil {
 
     // JWT token에서 id 파싱
     public String getJWTId(String JWT) {
-        return (String) Jwts.parser()
+        return Jwts.parser()
                 .setSigningKey(key)
                 .parseClaimsJws(JWT)
                 .getBody().get("id").toString();

@@ -1,13 +1,11 @@
 package com.example.algoproject.security;
 
-import com.example.algoproject.errors.ErrorResponse;
 import com.example.algoproject.errors.exception.NotValidateJWTException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -29,7 +27,7 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
     public void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
         try {
             // 헤더에서 jwtToken 분리
-            String token = jwtUtil.resolveToken((HttpServletRequest) request);
+            String token = jwtUtil.resolveToken(request);
 
             // 유효한 토큰인지 확인
             jwtUtil.validateToken(token);
@@ -42,8 +40,8 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
             response.setStatus(HttpStatus.UNAUTHORIZED.value());
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
             response.setCharacterEncoding("UTF-8");
-            ErrorResponse errorResponse = ErrorResponse.of(HttpStatus.UNAUTHORIZED, ex.getMessage());
-            objectMapper.writeValue(response.getWriter(), new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED));
+            //ErrorResponse errorResponse = ErrorResponse.of(HttpStatus.UNAUTHORIZED, ex.getMessage());
+            //objectMapper.writeValue(response.getWriter(), new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED));
         }
     }
 }

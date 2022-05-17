@@ -28,7 +28,7 @@ public class ProblemService {
     @Transactional
     public void create(AddProblem request) {
 
-        Study study = studyService.getStydy(request.getStudyId());
+        Study study = studyService.getStudy(request.getStudyId());
         Problem problem = new Problem(request.getNumber(), request.getName(), request.getUrl(), request.getPlatform(), request.getWeek(), request.getTypes());
 
         problem.setStudy(study);
@@ -45,14 +45,14 @@ public class ProblemService {
 
     @Transactional
     public List<ProblemInfo> list(String studyId) {
-        Study study = studyService.getStydy(studyId);
+        Study study = studyService.getStudy(studyId);
 
         return getProblems(study);
     }
 
     @Transactional
     public List<ProblemInfo> weekList(ProblemWeekList request) {
-        Study study = studyService.getStydy(request.getStudyId());
+        Study study = studyService.getStudy(request.getStudyId());
 
         return getWeekProblems(study, request.getWeek());
     }
@@ -64,7 +64,7 @@ public class ProblemService {
     }
 
     @Transactional
-    public String[] getPlatforms() {
+    public List<String> getPlatforms() {
         return Platform.getList();
     }
 
