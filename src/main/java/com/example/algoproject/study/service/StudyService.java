@@ -1,17 +1,16 @@
 package com.example.algoproject.study.service;
 
+import com.example.algoproject.belongsto.service.BelongsToService;
 import com.example.algoproject.errors.exception.NotExistStudyException;
-import com.example.algoproject.errors.exception.NotExistUserException;
-import com.example.algoproject.study.domain.BelongsTo;
+import com.example.algoproject.belongsto.domain.BelongsTo;
 import com.example.algoproject.study.domain.Study;
 import com.example.algoproject.study.dto.request.*;
 import com.example.algoproject.study.dto.response.MemberInfo;
 import com.example.algoproject.study.dto.response.StudyInfo;
-import com.example.algoproject.study.repository.BelongsToRepository;
 import com.example.algoproject.study.repository.StudyRepository;
 import com.example.algoproject.user.domain.User;
 import com.example.algoproject.user.dto.CustomUserDetailsVO;
-import com.example.algoproject.user.repository.UserRepository;
+import com.example.algoproject.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
@@ -29,14 +28,14 @@ import java.util.Map;
 @Service
 public class StudyService {
 
-    private final UserRepository userRepository;
     private final StudyRepository studyRepository;
-    private final BelongsToRepository belongsToRepository;
+    private final UserService userService;
+    private final BelongsToService belongsToService;
 
     @Transactional
     public String create(CustomUserDetailsVO cudVO, CreateStudy request) {
 
-        User leader = userRepository.findByUserId(cudVO.getUsername()).orElseThrow(NotExistUserException::new);
+        User leader = userService.findByUserId(cudVO.getUsername());
         log.info("study name: " + request.getStudyName());
         log.info("repository name: " + request.getRepoName());
         log.info("leader name: " + leader.getName());
@@ -49,7 +48,7 @@ public class StudyService {
         studyRepository.save(study);
 
         // 스터디 생성시 팀장을 스터디 멤버에 추가
-        belongsToRepository.save(new BelongsTo(leader, study, true));
+        belongsToService.save(new BelongsTo(leader, study, true));
 
         return response.get("id").toString();
     }
@@ -57,10 +56,10 @@ public class StudyService {
     @Transactional
     public void addMember(CustomUserDetailsVO cudVO, AddMember request) {
 
-        User leader = userRepository.findByUserId(cudVO.getUsername()).orElseThrow(NotExistUserException::new);
+        User leader = userService.findByUserId(cudVO.getUsername());
         log.info("leader name: " + leader.getName());
 
-        User member = userRepository.findByName(request.getMemberName()).orElseThrow(NotExistUserException::new);
+        User member = userService.findByName(request.getMemberName());
         log.info("member name: " + member.getName());
 
         Study study = studyRepository.findByStudyId(request.getStudyId()).orElseThrow(NotExistStudyException::new);
@@ -69,13 +68,13 @@ public class StudyService {
         // leader 가 github 에서 member 에게 study 레포지토리로 contributor 초대를 보냄
         addContributorResponse(leader, member, study);
 
-        belongsToRepository.save(new BelongsTo(member, study, false));
+        belongsToService.save(new BelongsTo(member, study, false));
     }
 
     @Transactional
     public List<MemberInfo> getMembers(MemberList request) {
 
-        User owner = userRepository.findByName(request.getOwnerName()).orElseThrow(NotExistUserException::new);
+        User owner = userService.findByName(request.getOwnerName());
         log.info("owner name: " + owner.getName());
 
         Study study = studyRepository.findByStudyId(request.getStudyId()).orElseThrow(NotExistStudyException::new);
@@ -83,7 +82,7 @@ public class StudyService {
 
         // 스터디에 있는 사람들 중 아직 초대 받지 않은 사람이 있으면 github 에서 다시 갱신해옴
         // 만약 다 초대를 받았다면 github 에서 갱신해오지 않는다
-        List<BelongsTo> belongs = belongsToRepository.findByStudy(study);
+        List<BelongsTo> belongs = belongsToService.findByStudy(study);
 
         if (!isAllAccepted(belongs))
             updateMemberList(owner, study, belongs);
@@ -96,7 +95,7 @@ public class StudyService {
 
         Study study = studyRepository.findByStudyId(studyId).orElseThrow(NotExistStudyException::new);
 
-        List<BelongsTo> belongs = belongsToRepository.findByStudy(study);
+        List<BelongsTo> belongs = belongsToService.findByStudy(study);
 
         List<MemberInfo> members = getMemberList(belongs);
 
@@ -106,15 +105,15 @@ public class StudyService {
     @Transactional
     public List<Study> list(CustomUserDetailsVO cudVO) {
 
-        User user = userRepository.findByUserId(cudVO.getUsername()).orElseThrow(NotExistUserException::new);
+        User user = userService.findByUserId(cudVO.getUsername());
 
-        List<BelongsTo> belongs = belongsToRepository.findByMember(user);
+        List<BelongsTo> belongs = belongsToService.findByMember(user);
 
         return getStudyList(belongs);
     }
 
     @Transactional
-    public Study getStydy(String studyId) {
+    public Study getStudy(String studyId) {
         return studyRepository.findByStudyId(studyId).orElseThrow(NotExistStudyException::new);
     }
 
@@ -222,7 +221,7 @@ public class StudyService {
                 // github api 를 이용해 조회한 contributor 가 새로 추가된 경우(초대를 받은 경우) 상태를 업데이트 해준다
                 if(response.get("id") == belongsTo.getMember().getUserId() && !belongsTo.isAccepted()){
                     belongsTo.acceptInvitation();
-                    belongsToRepository.save(belongsTo);
+                    belongsToService.save(belongsTo);
                 }
     }
 

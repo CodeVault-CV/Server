@@ -1,5 +1,6 @@
-package com.example.algoproject.study.domain;
+package com.example.algoproject.belongsto.domain;
 
+import com.example.algoproject.study.domain.Study;
 import com.example.algoproject.user.domain.User;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

@@ -1,42 +1,39 @@
 package com.example.algoproject.errors;
 
 import com.example.algoproject.errors.exception.*;
+import com.example.algoproject.errors.response.CommonResponse;
+import com.example.algoproject.errors.response.ResponseService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @Slf4j
+@RequiredArgsConstructor
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-    @ExceptionHandler(NotExistUserException.class)
-    ResponseEntity<ErrorResponse> handleNotExistUser(NotExistUserException ex) {
-        return handleBadRequest(ex);
-    }
 
-    @ExceptionHandler(NotExistStudyException.class)
-    ResponseEntity<ErrorResponse> handleNotExistStudy(NotExistStudyException ex) {
-        return handleBadRequest(ex);
-    }
+    private final ResponseService responseService;
 
-    @ExceptionHandler(NotExistProblemException.class)
-    ResponseEntity<ErrorResponse> handleNotExistProblem(NotExistProblemException ex) {
+    @ExceptionHandler({NotExistUserException.class, NotExistStudyException.class, NotExistProblemException.class,
+            NotExistSolutionException.class})
+    CommonResponse handleBadRequestException(Exception ex) {
         return handleBadRequest(ex);
     }
 
     @ExceptionHandler(Exception.class)
-    ResponseEntity handleException(Exception ex) {
+    CommonResponse handleException(Exception ex) {
         return handleInternalServerError(ex);
     }
 
-    private ResponseEntity<ErrorResponse> handleBadRequest (Exception ex) {
-        final ErrorResponse response = ErrorResponse.of(HttpStatus.BAD_REQUEST, ex.getMessage());
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    private CommonResponse handleBadRequest (Exception ex) {
+        log.info(ex.getMessage());
+        return responseService.getErrorResponse(HttpStatus.BAD_REQUEST.value(), ex.getMessage());
     }
 
-    private ResponseEntity handleInternalServerError (Exception ex) {
-        final ErrorResponse response = ErrorResponse.of(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
-        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+    private CommonResponse handleInternalServerError (Exception ex) {
+        log.info(ex.getMessage());
+        return responseService.getErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), ex.getMessage());
     }
 }

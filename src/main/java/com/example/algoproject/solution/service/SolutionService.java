@@ -1,6 +1,5 @@
 package com.example.algoproject.solution.service;
 
-import com.example.algoproject.errors.SuccessResponse;
 import com.example.algoproject.errors.exception.NotExistProblemException;
 import com.example.algoproject.errors.exception.NotExistSolutionException;
 import com.example.algoproject.errors.exception.NotExistStudyException;
@@ -47,7 +46,7 @@ public class SolutionService {
     private final PathUtil pathUtil;
     private final ReadMeUtil readMeUtil;
 
-    public SuccessResponse upload(CustomUserDetailsVO cudVO, AddSolution addSolution, MultipartFile code) throws IOException {
+    public void upload(CustomUserDetailsVO cudVO, AddSolution addSolution, MultipartFile code) throws IOException {
 
         User user = userRepository.findByUserId(cudVO.getUsername()).orElseThrow(NotExistUserException::new);
         Problem problem = problemRepository.findById(addSolution.getProblemId()).orElseThrow(NotExistProblemException::new);
@@ -77,11 +76,9 @@ public class SolutionService {
 
         /* DB에 저장 */
         solutionRepository.save(new Solution(user, problem, codeUrl, readMeUrl, new Timestamp(date), addSolution.getTime(), addSolution.getMemory()));
-
-        return SuccessResponse.of(HttpStatus.OK, "코드와 리드미 파일이 정상적으로 업로드 되었습니다..");
     }
 
-    public S3UrlResponse getFileUrl(CustomUserDetailsVO cudVO, Long problemId) throws IOException {
+    public S3UrlResponse getFileUrl(CustomUserDetailsVO cudVO, Long problemId) {
 
         User user = userRepository.findByUserId(cudVO.getUsername()).orElseThrow(NotExistUserException::new);
 

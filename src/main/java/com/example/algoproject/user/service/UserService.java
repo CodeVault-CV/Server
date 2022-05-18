@@ -1,7 +1,6 @@
 package com.example.algoproject.user.service;
 
 import com.example.algoproject.errors.exception.NotExistUserException;
-import com.example.algoproject.s3.S3Uploader;
 import com.example.algoproject.user.domain.User;
 import com.example.algoproject.user.dto.LoginDto;
 import com.example.algoproject.user.dto.TokenDto;
@@ -29,7 +28,6 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final JWTUtil jwtUtil;
-    private final S3Uploader s3Uploader;
 
     @Value("${client.id}")
     private String clientId;
@@ -67,6 +65,20 @@ public class UserService {
         User user = userRepository.findByName(name).orElseThrow(NotExistUserException::new);
         return new UserInfo(user.getName(), user.getImageUrl());
     }
+
+    @Transactional
+    public User findByUserId(String userId) {
+        return userRepository.findByUserId(userId).orElseThrow(NotExistUserException::new);
+    }
+
+    @Transactional
+    public User findByName(String name) {
+        return userRepository.findByName(name).orElseThrow(NotExistUserException::new);
+    }
+
+    //
+    // private
+    //
 
     private TokenDto accessTokenResponse(String code) {
 
