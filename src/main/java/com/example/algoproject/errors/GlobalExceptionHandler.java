@@ -17,7 +17,8 @@ public class GlobalExceptionHandler {
     private final ResponseService responseService;
 
     @ExceptionHandler({NotExistUserException.class, NotExistStudyException.class, NotExistProblemException.class,
-            NotExistSolutionException.class})
+            NotExistSolutionException.class, FailedResponseException.class, NotLeaderUserException.class,
+            AlreadyExistMemberException.class})
     CommonResponse handleBadRequestException(Exception ex) {
         return handleBadRequest(ex);
     }

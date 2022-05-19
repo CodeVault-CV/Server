@@ -32,4 +32,9 @@ public class BelongsToService {
     public List<BelongsTo> findByMember(User user) {
         return belongsToRepository.findByMember(user);
     }
+
+    @Transactional
+    public void deleteByStudy(Study study) {
+        belongsToRepository.deleteAll(findByStudy(study));
+    }
 }
