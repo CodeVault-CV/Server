@@ -1,6 +1,9 @@
 package com.example.algoproject.user.service;
 
+import com.example.algoproject.errors.exception.FailedResponseException;
 import com.example.algoproject.errors.exception.NotExistUserException;
+import com.example.algoproject.errors.response.CommonResponse;
+import com.example.algoproject.errors.response.ResponseService;
 import com.example.algoproject.user.domain.User;
 import com.example.algoproject.user.dto.LoginDto;
 import com.example.algoproject.user.dto.TokenDto;
@@ -27,6 +30,7 @@ import java.util.Optional;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final ResponseService responseService;
     private final JWTUtil jwtUtil;
 
     @Value("${client.id}")
@@ -36,7 +40,7 @@ public class UserService {
     private String clientSecret;
 
     @Transactional
-    public LoginDto login(String code) {
+    public CommonResponse login(String code) {
 
         // {code} 를 이용해 Github 에 access_token 요청
         TokenDto tokenDto = accessTokenResponse(code);
@@ -57,13 +61,13 @@ public class UserService {
             userRepository.save(user.get());
         }
 
-        return new LoginDto(jwtUtil.makeJWT(userInfoResponse.get("id").toString()), userInfoResponse.get("login").toString());
+        return responseService.getSingleResponse(new LoginDto(jwtUtil.makeJWT(userInfoResponse.get("id").toString()), userInfoResponse.get("login").toString()));
     }
 
     @Transactional
-    public UserInfo profile(String name) {
+    public CommonResponse profile(String name) {
         User user = userRepository.findByName(name).orElseThrow(NotExistUserException::new);
-        return new UserInfo(user.getName(), user.getImageUrl());
+        return responseService.getSingleResponse(new UserInfo(user.getName(), user.getImageUrl()));
     }
 
     @Transactional
@@ -102,6 +106,9 @@ public class UserService {
                 TokenDto.class
         );
 
+        if(!response.getStatusCode().is2xxSuccessful())
+            throw new FailedResponseException("github api에서 accesstoken 받는 것을 실패했습니다");
+
         return response.getBody();
     }
 
@@ -122,6 +129,9 @@ public class UserService {
                 entity,
                 new ParameterizedTypeReference<>() {
                 });
+
+        if(!response.getStatusCode().is2xxSuccessful())
+            throw new FailedResponseException("github api에서 유저 정보를 불러오는 것을 실패했습니다");
 
         return response.getBody();
     }

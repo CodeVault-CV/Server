@@ -1,6 +1,8 @@
 package com.example.algoproject.problem.service;
 
 import com.example.algoproject.errors.exception.NotExistProblemException;
+import com.example.algoproject.errors.response.CommonResponse;
+import com.example.algoproject.errors.response.ResponseService;
 import com.example.algoproject.problem.domain.Platform;
 import com.example.algoproject.problem.domain.Problem;
 import com.example.algoproject.problem.dto.request.AddProblem;
@@ -24,9 +26,10 @@ public class ProblemService {
 
     private final ProblemRepository problemRepository;
     private final StudyService studyService;
+    private final ResponseService responseService;
 
     @Transactional
-    public void create(AddProblem request) {
+    public CommonResponse create(AddProblem request) {
 
         Study study = studyService.getStudy(request.getStudyId());
         Problem problem = new Problem(request.getNumber(), request.getName(), request.getUrl(), request.getPlatform(), request.getWeek(), request.getTypes());
@@ -34,38 +37,42 @@ public class ProblemService {
         problem.setStudy(study);
         study.addProblem(problem);
         studyService.save(study);
+
+        return responseService.getSuccessResponse();
     }
 
     @Transactional
-    public ProblemInfo detail(Long problemId) {
+    public CommonResponse detail(Long problemId) {
         Problem problem = problemRepository.findById(problemId).orElseThrow(NotExistProblemException::new);
 
-        return new ProblemInfo(problem.getNumber(), problem.getName(), problem.getUrl(), problem.getPlatform(), problem.getWeek(), problem.getTypes());
+        return responseService.getSingleResponse(new ProblemInfo(problem.getNumber(), problem.getName(),
+                problem.getUrl(), problem.getPlatform(), problem.getWeek(), problem.getTypes()));
     }
 
     @Transactional
-    public List<ProblemInfo> list(String studyId) {
+    public CommonResponse list(String studyId) {
         Study study = studyService.getStudy(studyId);
 
-        return getProblems(study);
+        return responseService.getListResponse(getProblems(study));
     }
 
     @Transactional
-    public List<ProblemInfo> weekList(ProblemWeekList request) {
+    public CommonResponse weekList(ProblemWeekList request) {
         Study study = studyService.getStudy(request.getStudyId());
 
-        return getWeekProblems(study, request.getWeek());
+        return responseService.getListResponse(getWeekProblems(study, request.getWeek()));
     }
 
     @Transactional
-    public void delete(Long problemId) {
+    public CommonResponse delete(Long problemId) {
         Problem problem = problemRepository.findById(problemId).orElseThrow(NotExistProblemException::new);
         problemRepository.delete(problem);
+        return responseService.getSuccessResponse();
     }
 
     @Transactional
-    public List<String> getPlatforms() {
-        return Platform.getList();
+    public CommonResponse getPlatforms() {
+        return responseService.getListResponse(Platform.getList());
     }
 
     //

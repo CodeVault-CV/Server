@@ -4,6 +4,8 @@ import com.example.algoproject.errors.exception.NotExistProblemException;
 import com.example.algoproject.errors.exception.NotExistSolutionException;
 import com.example.algoproject.errors.exception.NotExistStudyException;
 import com.example.algoproject.errors.exception.NotExistUserException;
+import com.example.algoproject.errors.response.CommonResponse;
+import com.example.algoproject.errors.response.ResponseService;
 import com.example.algoproject.problem.domain.Problem;
 import com.example.algoproject.problem.repository.ProblemRepository;
 import com.example.algoproject.s3.S3Uploader;
@@ -42,11 +44,12 @@ public class SolutionService {
     private final SolutionRepository solutionRepository;
     private final ProblemRepository problemRepository;
     private final StudyRepository studyRepository;
+    private final ResponseService responseService;
     private final S3Uploader s3Uploader;
     private final PathUtil pathUtil;
     private final ReadMeUtil readMeUtil;
 
-    public void upload(CustomUserDetailsVO cudVO, AddSolution addSolution, MultipartFile code) throws IOException {
+    public CommonResponse upload(CustomUserDetailsVO cudVO, AddSolution addSolution, MultipartFile code) throws IOException {
 
         User user = userRepository.findByUserId(cudVO.getUsername()).orElseThrow(NotExistUserException::new);
         Problem problem = problemRepository.findById(addSolution.getProblemId()).orElseThrow(NotExistProblemException::new);
@@ -58,7 +61,7 @@ public class SolutionService {
         log.info("github repository path : " + gitHubPath);
         log.info("s3 repository path : " + s3Path);
 
-        Long date = System.currentTimeMillis();
+        long date = System.currentTimeMillis();
 
         /* readme file 생성 메소드 */
         MultipartFile readMe = readMeUtil.makeReadMe(addSolution.getHeader(), addSolution.getContent());
@@ -76,16 +79,18 @@ public class SolutionService {
 
         /* DB에 저장 */
         solutionRepository.save(new Solution(user, problem, codeUrl, readMeUrl, new Timestamp(date), addSolution.getTime(), addSolution.getMemory()));
+
+        return responseService.getSuccessResponse();
     }
 
-    public S3UrlResponse getFileUrl(CustomUserDetailsVO cudVO, Long problemId) {
+    public CommonResponse getFileUrl(CustomUserDetailsVO cudVO, Long problemId) {
 
         User user = userRepository.findByUserId(cudVO.getUsername()).orElseThrow(NotExistUserException::new);
 
         Problem problem = problemRepository.findById(problemId).orElseThrow(NotExistProblemException::new);
         Solution solution = solutionRepository.findByUserIdAndProblemId(user, problem).orElseThrow(NotExistSolutionException::new);
 
-        return new S3UrlResponse(solution.getCodeUrl(), solution.getReadMeUrl());
+        return responseService.getSingleResponse(new S3UrlResponse(solution.getCodeUrl(), solution.getReadMeUrl()));
     }
 
     /*
