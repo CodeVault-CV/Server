@@ -40,7 +40,7 @@ public class JWTUtil {
         return Jwts.builder()
                 .setHeaderParam(Header.TYPE, Header.JWT_TYPE)
                 .setIssuedAt(now)
-                .setExpiration(new Date(now.getTime() + Duration.ofMinutes(30).toMillis()))
+                .setExpiration(new Date(now.getTime() + Duration.ofMinutes(60).toMillis()))
                 .claim("id", id)
                 .signWith(SignatureAlgorithm.HS256, key)
                 .compact();
