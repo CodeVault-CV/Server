@@ -71,7 +71,7 @@ public class JWTUtil {
         }
         String jwt = token.substring("Bearer".length()).stripLeading();
         if (jwt.equals("")) {
-            log.info("Jwt token is null");
+            log.info("JWT is null.");
             throw new NotValidateJWTException();
         }
         return jwt;
