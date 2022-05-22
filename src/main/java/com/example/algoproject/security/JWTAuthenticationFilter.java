@@ -37,11 +37,16 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
             SecurityContextHolder.getContext().setAuthentication(authentication);
             chain.doFilter(request, response);
         } catch (NotValidateJWTException ex) {
+            /* Filter 단 Custom 에러 (JWT 관련 에러) 핸들링 */
+            Map<String, Object> errorDetails = new HashMap<>();
+            errorDetails.put("code", HttpStatus.UNAUTHORIZED.value());
+            errorDetails.put("message", ex.getMessage());
+
             response.setStatus(HttpStatus.UNAUTHORIZED.value());
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
             response.setCharacterEncoding("UTF-8");
-            //ErrorResponse errorResponse = ErrorResponse.of(HttpStatus.UNAUTHORIZED, ex.getMessage());
-            //objectMapper.writeValue(response.getWriter(), new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED));
+
+            objectMapper.writeValue(response.getWriter(), errorDetails);
         }
     }
 }
