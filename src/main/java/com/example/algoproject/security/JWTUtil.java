@@ -40,7 +40,7 @@ public class JWTUtil {
         return Jwts.builder()
                 .setHeaderParam(Header.TYPE, Header.JWT_TYPE)
                 .setIssuedAt(now)
-                .setExpiration(new Date(now.getTime() + Duration.ofMinutes(30).toMillis()))
+                .setExpiration(new Date(now.getTime() + Duration.ofMinutes(60).toMillis()))
                 .claim("id", id)
                 .signWith(SignatureAlgorithm.HS256, key)
                 .compact();
@@ -71,7 +71,7 @@ public class JWTUtil {
         }
         String jwt = token.substring("Bearer".length()).stripLeading();
         if (jwt.equals("")) {
-            log.info("Jwt token is null");
+            log.info("JWT is null.");
             throw new NotValidateJWTException();
         }
         return jwt;
@@ -80,9 +80,14 @@ public class JWTUtil {
     // 토큰 유효성 and 만료일자 확인
     public void validateToken(String jwtToken) {
 
-        Jws<Claims> claims = Jwts.parser().setSigningKey(key).parseClaimsJws(jwtToken);
-        if (claims.getBody().getExpiration().before(new Date())) {
-            log.info("Jwt token is invalid.");
+        try {
+            Jws<Claims> claims = Jwts.parser().setSigningKey(key).parseClaimsJws(jwtToken);
+            if (claims.getBody().getExpiration().before(new Date())) { // JWT 만료
+                log.info("JWT has expired.");
+                throw new NotValidateJWTException();
+            }
+        } catch (SignatureException ex) { // JWT 일치 안함
+            log.info("JWT do not match.");
             throw new NotValidateJWTException();
         }
     }
