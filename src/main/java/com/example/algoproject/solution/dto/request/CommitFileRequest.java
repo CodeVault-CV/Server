@@ -1,4 +1,4 @@
-package com.example.algoproject.solution.dto;
+package com.example.algoproject.solution.dto.request;
 
 import lombok.Data;
 import org.springframework.lang.Nullable;
