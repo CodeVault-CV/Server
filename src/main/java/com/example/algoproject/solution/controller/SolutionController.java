@@ -33,4 +33,11 @@ public class SolutionController {
                                  @RequestPart AddSolution solution, @RequestPart MultipartFile code) throws IOException {
         return solutionService.upload(cudVO, solution, code);
     }
+
+    @ApiOperation(value="솔루션 업데이트", notes="code와 message 반환")
+    @PostMapping(value="/update/{solutionId}", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    public CommonResponse update(@AuthenticationPrincipal CustomUserDetailsVO cudVO,
+                                 @RequestPart(value="code", required = false) MultipartFile code, @RequestPart(value="solution", required = false) UpdateSolution solution, @PathVariable("solutionId") Long solutionId) throws IOException {
+        return solutionService.update(cudVO, solutionId, solution, code);
+    }
 }

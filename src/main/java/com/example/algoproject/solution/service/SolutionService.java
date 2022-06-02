@@ -91,6 +91,41 @@ public class SolutionService {
         return responseService.getSingleResponse(new SolutionInfo(solution.getId(), solution.getCodeUrl(), solution.getReadMeUrl(), solution.getDate(), solution.getTime(), solution.getMemory()));
     }
 
+    public CommonResponse update(CustomUserDetailsVO cudVO, Long solutionId, UpdateSolution updateSolution, MultipartFile code) throws IOException {
+
+        User user = userRepository.findByUserId(cudVO.getUsername()).orElseThrow(NotExistUserException::new);
+        Solution solution = solutionRepository.findById(solutionId).orElseThrow(NotExistSolutionException::new);
+        Problem problem = problemRepository.findById(updateSolution.getProblemId()).orElseThrow(NotExistProblemException::new);
+        Study study = studyRepository.findByStudyId(problem.getStudy().getStudyId()).orElseThrow(NotExistStudyException::new);
+
+        String gitHubPath = pathUtil.makeGitHubPath(solution.getProblemId(), user.getName());
+        String s3Path = pathUtil.makeS3Path(study.getRepositoryName(), problem, user.getName());
+
+        /* readme file 생성 메소드 */
+        MultipartFile readMe = readMeUtil.makeReadMe(updateSolution.getHeader(), updateSolution.getContent());
+
+        /* github에 file commit */
+        checkFileResponse(code, user, gitHubPath, study.getRepositoryName(), "");
+        checkFileResponse(readMe, user, gitHubPath, study.getRepositoryName(), "");
+
+        /* s3에 file upload */
+        String codeUrl = s3Uploader.upload(code, s3Path);
+        String readMeUrl = s3Uploader.upload(readMe, s3Path);
+
+        /* local 리드미 삭제 */
+        readMeUtil.removeReadMe(readMe);
+
+        /* 메모리/시간복잡도, 등록시간 update */
+        solution.setMemory(updateSolution.getMemory());
+        solution.setTime(updateSolution.getTime());
+        solution.setDate(new Timestamp(System.currentTimeMillis()));
+        solution.setReadMeUrl(readMeUrl);
+        solution.setCodeUrl(codeUrl);
+        solutionRepository.save(solution);
+
+        return responseService.getSuccessResponse();
+    }
+
     /*
     private method
     */
