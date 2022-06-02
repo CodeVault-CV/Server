@@ -25,7 +25,7 @@ public class ProblemController {
     }
 
     @ApiOperation(value = "문제 보기", notes = "문제 json 형태로 반환")
-    @GetMapping({"/{problemId}"})
+    @GetMapping("/{problemId}")
     public CommonResponse problemDetail(@AuthenticationPrincipal @PathVariable("problemId") Long problemId) {
         return problemService.detail(problemId);
     }

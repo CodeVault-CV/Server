@@ -1,10 +1,8 @@
 package com.example.algoproject.solution.controller;
 
 import com.example.algoproject.errors.response.CommonResponse;
-import com.example.algoproject.errors.response.ResponseService;
-import com.example.algoproject.errors.response.SingleResponse;
-import com.example.algoproject.solution.dto.AddSolution;
-import com.example.algoproject.solution.dto.S3UrlResponse;
+import com.example.algoproject.solution.dto.request.AddSolution;
+import com.example.algoproject.solution.dto.request.UpdateSolution;
 import com.example.algoproject.solution.service.SolutionService;
 import com.example.algoproject.user.dto.CustomUserDetailsVO;
 import io.swagger.annotations.ApiOperation;
@@ -24,9 +22,9 @@ public class SolutionController {
     private final SolutionService solutionService;
 
     @ApiOperation(value="솔루션 조회", notes="제출한 솔루션 있으면 코드&리드미 파일 올라가 있는 s3 링크 반환. 없으면 null")
-    @GetMapping("/disp")
-    public CommonResponse displaySolution(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @RequestParam("problemId") Long problemId) {
-        return solutionService.getFileUrl(cudVO, problemId);
+    @GetMapping("/{solutionId}")
+    public CommonResponse solutionDetail(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @PathVariable("solutionId") Long solutionId) {
+        return solutionService.detail(cudVO, solutionId);
     }
 
     @ApiOperation(value="솔루션 업로드", notes="code와 message 반환")
@@ -34,5 +32,12 @@ public class SolutionController {
     public CommonResponse upload(@AuthenticationPrincipal CustomUserDetailsVO cudVO,
                                  @RequestPart AddSolution solution, @RequestPart MultipartFile code) throws IOException {
         return solutionService.upload(cudVO, solution, code);
+    }
+
+    @ApiOperation(value="솔루션 업데이트", notes="code와 message 반환")
+    @PostMapping(value="/update/{solutionId}", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    public CommonResponse update(@AuthenticationPrincipal CustomUserDetailsVO cudVO,
+                                 @RequestPart(value="code", required = false) MultipartFile code, @RequestPart(value="solution", required = false) UpdateSolution solution, @PathVariable("solutionId") Long solutionId) throws IOException {
+        return solutionService.update(cudVO, solutionId, solution, code);
     }
 }

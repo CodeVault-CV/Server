@@ -10,9 +10,10 @@ import com.example.algoproject.problem.domain.Problem;
 import com.example.algoproject.problem.repository.ProblemRepository;
 import com.example.algoproject.s3.S3Uploader;
 import com.example.algoproject.solution.domain.Solution;
-import com.example.algoproject.solution.dto.AddSolution;
-import com.example.algoproject.solution.dto.CommitFileRequest;
-import com.example.algoproject.solution.dto.S3UrlResponse;
+import com.example.algoproject.solution.dto.request.AddSolution;
+import com.example.algoproject.solution.dto.request.CommitFileRequest;
+import com.example.algoproject.solution.dto.request.UpdateSolution;
+import com.example.algoproject.solution.dto.response.SolutionInfo;
 import com.example.algoproject.solution.repository.SolutionRepository;
 import com.example.algoproject.study.domain.Study;
 import com.example.algoproject.study.repository.StudyRepository;
@@ -83,14 +84,46 @@ public class SolutionService {
         return responseService.getSuccessResponse();
     }
 
-    public CommonResponse getFileUrl(CustomUserDetailsVO cudVO, Long problemId) {
+    public CommonResponse detail(CustomUserDetailsVO cudVO, Long solutionId) {
+
+        Solution solution = solutionRepository.findById(solutionId).orElseThrow(NotExistSolutionException::new);
+
+        return responseService.getSingleResponse(new SolutionInfo(solution.getId(), solution.getCodeUrl(), solution.getReadMeUrl(), solution.getDate(), solution.getTime(), solution.getMemory()));
+    }
+
+    public CommonResponse update(CustomUserDetailsVO cudVO, Long solutionId, UpdateSolution updateSolution, MultipartFile code) throws IOException {
 
         User user = userRepository.findByUserId(cudVO.getUsername()).orElseThrow(NotExistUserException::new);
+        Solution solution = solutionRepository.findById(solutionId).orElseThrow(NotExistSolutionException::new);
+        Problem problem = problemRepository.findById(updateSolution.getProblemId()).orElseThrow(NotExistProblemException::new);
+        Study study = studyRepository.findByStudyId(problem.getStudy().getStudyId()).orElseThrow(NotExistStudyException::new);
 
-        Problem problem = problemRepository.findById(problemId).orElseThrow(NotExistProblemException::new);
-        Solution solution = solutionRepository.findByUserIdAndProblemId(user, problem).orElseThrow(NotExistSolutionException::new);
+        String gitHubPath = pathUtil.makeGitHubPath(solution.getProblemId(), user.getName());
+        String s3Path = pathUtil.makeS3Path(study.getRepositoryName(), problem, user.getName());
 
-        return responseService.getSingleResponse(new S3UrlResponse(solution.getCodeUrl(), solution.getReadMeUrl()));
+        /* readme file 생성 메소드 */
+        MultipartFile readMe = readMeUtil.makeReadMe(updateSolution.getHeader(), updateSolution.getContent());
+
+        /* github에 file commit */
+        checkFileResponse(code, user, gitHubPath, study.getRepositoryName(), "");
+        checkFileResponse(readMe, user, gitHubPath, study.getRepositoryName(), "");
+
+        /* s3에 file upload */
+        String codeUrl = s3Uploader.upload(code, s3Path);
+        String readMeUrl = s3Uploader.upload(readMe, s3Path);
+
+        /* local 리드미 삭제 */
+        readMeUtil.removeReadMe(readMe);
+
+        /* 메모리/시간복잡도, 등록시간 update */
+        solution.setMemory(updateSolution.getMemory());
+        solution.setTime(updateSolution.getTime());
+        solution.setDate(new Timestamp(System.currentTimeMillis()));
+        solution.setReadMeUrl(readMeUrl);
+        solution.setCodeUrl(codeUrl);
+        solutionRepository.save(solution);
+
+        return responseService.getSuccessResponse();
     }
 
     /*
