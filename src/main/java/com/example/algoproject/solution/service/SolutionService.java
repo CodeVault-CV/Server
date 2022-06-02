@@ -84,14 +84,11 @@ public class SolutionService {
         return responseService.getSuccessResponse();
     }
 
-    public CommonResponse getFileUrl(CustomUserDetailsVO cudVO, Long problemId) {
+    public CommonResponse detail(CustomUserDetailsVO cudVO, Long solutionId) {
 
-        User user = userRepository.findByUserId(cudVO.getUsername()).orElseThrow(NotExistUserException::new);
+        Solution solution = solutionRepository.findById(solutionId).orElseThrow(NotExistSolutionException::new);
 
-        Problem problem = problemRepository.findById(problemId).orElseThrow(NotExistProblemException::new);
-        Solution solution = solutionRepository.findByUserIdAndProblemId(user, problem).orElseThrow(NotExistSolutionException::new);
-
-        return responseService.getSingleResponse(new S3UrlResponse(solution.getCodeUrl(), solution.getReadMeUrl()));
+        return responseService.getSingleResponse(new SolutionInfo(solution.getId(), solution.getCodeUrl(), solution.getReadMeUrl(), solution.getDate(), solution.getTime(), solution.getMemory()));
     }
 
     /*
