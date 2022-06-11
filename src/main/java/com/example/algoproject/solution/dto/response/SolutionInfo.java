@@ -1,9 +1,11 @@
 package com.example.algoproject.solution.dto.response;
 
+import com.example.algoproject.comment.domain.Comment;
 import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
 import java.sql.Timestamp;
+import java.util.List;
 
 @Data
 public class SolutionInfo {
@@ -26,12 +28,15 @@ public class SolutionInfo {
     @NotBlank
     private String memory; //공간복잡도
 
-    public SolutionInfo(Long solutionId, String codeUrl, String readMeUrl, Timestamp date, String time, String memory) {
+    private List<Comment> comments;
+
+    public SolutionInfo(Long solutionId, String codeUrl, String readMeUrl, Timestamp date, String time, String memory, List<Comment> comments) {
         this.solutionId = solutionId;
         this.codeUrl = codeUrl;
         this.readMeUrl = readMeUrl;
         this.date = date;
         this.time = time;
         this.memory = memory;
+        this.comments = comments;
     }
 }

@@ -1,19 +1,25 @@
 package com.example.algoproject.solution.domain;
 
+import com.example.algoproject.comment.domain.Comment;
 import com.example.algoproject.problem.domain.Problem;
 import com.example.algoproject.user.domain.User;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
 @Entity
 public class Solution {
 
+
     @Id
+    @Column(name = "solution_id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
@@ -35,6 +41,13 @@ public class Solution {
 
     private String memory; //공간복잡도
 
+    @OneToMany(
+            mappedBy = "solution",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private List<Comment> comments = new ArrayList<>();
+
     public Solution(User userId, Problem problemId, String codeUrl, String readMeUrl, Timestamp date, String time, String memory) {
         this.userId = userId;
         this.problemId = problemId;
@@ -43,5 +56,11 @@ public class Solution {
         this.date = date;
         this.time = time;
         this.memory = memory;
+    }
+
+    public void addComment(Comment comment) {
+        this.comments.add(comment);
+        if(comment.getSolution() != this)
+            comment.setSolution(this);
     }
 }
