@@ -88,7 +88,7 @@ public class SolutionService {
 
         Solution solution = solutionRepository.findById(solutionId).orElseThrow(NotExistSolutionException::new);
 
-        return responseService.getSingleResponse(new SolutionInfo(solution.getId(), solution.getCodeUrl(), solution.getReadMeUrl(), solution.getDate(), solution.getTime(), solution.getMemory()));
+        return responseService.getSingleResponse(new SolutionInfo(solution.getId(), solution.getCodeUrl(), solution.getReadMeUrl(), solution.getDate(), solution.getTime(), solution.getMemory(), solution.getComments()));
     }
 
     public CommonResponse update(CustomUserDetailsVO cudVO, Long solutionId, UpdateSolution updateSolution, MultipartFile code) throws IOException {
@@ -124,6 +124,14 @@ public class SolutionService {
         solutionRepository.save(solution);
 
         return responseService.getSuccessResponse();
+    }
+
+    public Solution findById(Long solutionId) {
+        return solutionRepository.findById(solutionId).orElseThrow(NotExistSolutionException::new);
+    }
+
+    public void save(Solution solution) {
+        solutionRepository.save(solution);
     }
 
     /*
