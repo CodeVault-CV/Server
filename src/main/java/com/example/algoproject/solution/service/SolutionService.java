@@ -1,13 +1,9 @@
 package com.example.algoproject.solution.service;
 
-import com.example.algoproject.errors.exception.NotExistProblemException;
 import com.example.algoproject.errors.exception.NotExistSolutionException;
-import com.example.algoproject.errors.exception.NotExistStudyException;
-import com.example.algoproject.errors.exception.NotExistUserException;
 import com.example.algoproject.errors.response.CommonResponse;
 import com.example.algoproject.errors.response.ResponseService;
 import com.example.algoproject.problem.domain.Problem;
-import com.example.algoproject.problem.repository.ProblemRepository;
 import com.example.algoproject.problem.service.ProblemService;
 import com.example.algoproject.s3.S3Uploader;
 import com.example.algoproject.solution.domain.Solution;
@@ -21,7 +17,6 @@ import com.example.algoproject.study.repository.StudyRepository;
 import com.example.algoproject.study.service.StudyService;
 import com.example.algoproject.user.domain.User;
 import com.example.algoproject.user.dto.CustomUserDetailsVO;
-import com.example.algoproject.user.repository.UserRepository;
 import com.example.algoproject.user.service.UserService;
 import com.example.algoproject.util.PathUtil;
 import com.example.algoproject.util.ReadMeUtil;
@@ -72,8 +67,8 @@ public class SolutionService {
         MultipartFile readMe = readMeUtil.makeReadMe(addSolution.getHeader(), addSolution.getContent());
 
         /* github에 file commit */
-        checkFileResponse(code, user, gitHubPath, study.getRepositoryName(), "");
-        checkFileResponse(readMe, user, gitHubPath, study.getRepositoryName(), "");
+        checkFileResponse(code, user, gitHubPath, study.getRepositoryName(), problem.getPlatform() + " [" + problem.getNumber() + "]" + problem.getName() + " By " + user.getName());
+        checkFileResponse(readMe, user, gitHubPath, study.getRepositoryName(), problem.getPlatform() + " [" + problem.getNumber() + "]" + problem.getName() + " By " + user.getName());
 
         /* s3에 file upload */
         String codeUrl = s3Uploader.upload(code, s3Path);
@@ -108,8 +103,8 @@ public class SolutionService {
         MultipartFile readMe = readMeUtil.makeReadMe(updateSolution.getHeader(), updateSolution.getContent());
 
         /* github에 file commit */
-        checkFileResponse(code, user, gitHubPath, study.getRepositoryName(), "");
-        checkFileResponse(readMe, user, gitHubPath, study.getRepositoryName(), "");
+        checkFileResponse(code, user, gitHubPath, study.getRepositoryName(), problem.getPlatform() + " [" + problem.getNumber() + "]" + problem.getName() + " By " + user.getName());
+        checkFileResponse(readMe, user, gitHubPath, study.getRepositoryName(), problem.getPlatform() + " [" + problem.getNumber() + "]" + problem.getName() + " By " + user.getName());
 
         /* s3에 file upload */
         String codeUrl = s3Uploader.upload(code, s3Path);
