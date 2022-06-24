@@ -1,13 +1,10 @@
 package com.example.algoproject.solution.service;
 
-import com.example.algoproject.errors.exception.NotExistProblemException;
 import com.example.algoproject.errors.exception.NotExistSolutionException;
-import com.example.algoproject.errors.exception.NotExistStudyException;
-import com.example.algoproject.errors.exception.NotExistUserException;
 import com.example.algoproject.errors.response.CommonResponse;
 import com.example.algoproject.errors.response.ResponseService;
 import com.example.algoproject.problem.domain.Problem;
-import com.example.algoproject.problem.repository.ProblemRepository;
+import com.example.algoproject.problem.service.ProblemService;
 import com.example.algoproject.s3.S3Uploader;
 import com.example.algoproject.solution.domain.Solution;
 import com.example.algoproject.solution.dto.request.AddSolution;
@@ -17,9 +14,10 @@ import com.example.algoproject.solution.dto.response.SolutionInfo;
 import com.example.algoproject.solution.repository.SolutionRepository;
 import com.example.algoproject.study.domain.Study;
 import com.example.algoproject.study.repository.StudyRepository;
+import com.example.algoproject.study.service.StudyService;
 import com.example.algoproject.user.domain.User;
 import com.example.algoproject.user.dto.CustomUserDetailsVO;
-import com.example.algoproject.user.repository.UserRepository;
+import com.example.algoproject.user.service.UserService;
 import com.example.algoproject.util.PathUtil;
 import com.example.algoproject.util.ReadMeUtil;
 import lombok.RequiredArgsConstructor;
@@ -41,10 +39,11 @@ import java.util.Map;
 @Service
 public class SolutionService {
 
-    private final UserRepository userRepository;
     private final SolutionRepository solutionRepository;
-    private final ProblemRepository problemRepository;
-    private final StudyRepository studyRepository;
+    private final UserService userService;
+    private final ProblemService problemService;
+    private final StudyService studyService;
+
     private final ResponseService responseService;
     private final S3Uploader s3Uploader;
     private final PathUtil pathUtil;
@@ -52,9 +51,9 @@ public class SolutionService {
 
     public CommonResponse upload(CustomUserDetailsVO cudVO, AddSolution addSolution, MultipartFile code) throws IOException {
 
-        User user = userRepository.findByUserId(cudVO.getUsername()).orElseThrow(NotExistUserException::new);
-        Problem problem = problemRepository.findById(addSolution.getProblemId()).orElseThrow(NotExistProblemException::new);
-        Study study = studyRepository.findByStudyId(problem.getStudy().getStudyId()).orElseThrow(NotExistStudyException::new);
+        User user = userService.findByUserId(cudVO.getUsername());
+        Problem problem = problemService.findById(addSolution.getProblemId());
+        Study study = studyService.findByStudyId(problem.getStudy().getStudyId());
 
         String gitHubPath = pathUtil.makeGitHubPath(problem, user.getName());
         String s3Path = pathUtil.makeS3Path(study.getRepositoryName(), problem, user.getName());
@@ -68,8 +67,8 @@ public class SolutionService {
         MultipartFile readMe = readMeUtil.makeReadMe(addSolution.getHeader(), addSolution.getContent());
 
         /* github에 file commit */
-        checkFileResponse(code, user, gitHubPath, study.getRepositoryName(), "");
-        checkFileResponse(readMe, user, gitHubPath, study.getRepositoryName(), "");
+        checkFileResponse(code, user, gitHubPath, study.getRepositoryName(), problem.getPlatform() + " [" + problem.getNumber() + "]" + problem.getName() + " By " + user.getName());
+        checkFileResponse(readMe, user, gitHubPath, study.getRepositoryName(), problem.getPlatform() + " [" + problem.getNumber() + "]" + problem.getName() + " By " + user.getName());
 
         /* s3에 file upload */
         String codeUrl = s3Uploader.upload(code, s3Path);
@@ -87,16 +86,15 @@ public class SolutionService {
     public CommonResponse detail(CustomUserDetailsVO cudVO, Long solutionId) {
 
         Solution solution = solutionRepository.findById(solutionId).orElseThrow(NotExistSolutionException::new);
-
         return responseService.getSingleResponse(new SolutionInfo(solution.getId(), solution.getCodeUrl(), solution.getReadMeUrl(), solution.getDate(), solution.getTime(), solution.getMemory(), solution.getComments()));
     }
 
     public CommonResponse update(CustomUserDetailsVO cudVO, Long solutionId, UpdateSolution updateSolution, MultipartFile code) throws IOException {
 
-        User user = userRepository.findByUserId(cudVO.getUsername()).orElseThrow(NotExistUserException::new);
+        User user = userService.findByUserId(cudVO.getUsername());
         Solution solution = solutionRepository.findById(solutionId).orElseThrow(NotExistSolutionException::new);
-        Problem problem = problemRepository.findById(updateSolution.getProblemId()).orElseThrow(NotExistProblemException::new);
-        Study study = studyRepository.findByStudyId(problem.getStudy().getStudyId()).orElseThrow(NotExistStudyException::new);
+        Problem problem = problemService.findById(updateSolution.getProblemId());
+        Study study = studyService.findByStudyId(problem.getStudy().getStudyId());
 
         String gitHubPath = pathUtil.makeGitHubPath(solution.getProblemId(), user.getName());
         String s3Path = pathUtil.makeS3Path(study.getRepositoryName(), problem, user.getName());
@@ -105,8 +103,8 @@ public class SolutionService {
         MultipartFile readMe = readMeUtil.makeReadMe(updateSolution.getHeader(), updateSolution.getContent());
 
         /* github에 file commit */
-        checkFileResponse(code, user, gitHubPath, study.getRepositoryName(), "");
-        checkFileResponse(readMe, user, gitHubPath, study.getRepositoryName(), "");
+        checkFileResponse(code, user, gitHubPath, study.getRepositoryName(), problem.getPlatform() + " [" + problem.getNumber() + "]" + problem.getName() + " By " + user.getName());
+        checkFileResponse(readMe, user, gitHubPath, study.getRepositoryName(), problem.getPlatform() + " [" + problem.getNumber() + "]" + problem.getName() + " By " + user.getName());
 
         /* s3에 file upload */
         String codeUrl = s3Uploader.upload(code, s3Path);

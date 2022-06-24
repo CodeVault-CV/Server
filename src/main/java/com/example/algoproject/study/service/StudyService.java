@@ -179,6 +179,11 @@ public class StudyService {
         studyRepository.save(study);
     }
 
+    @Transactional
+    public Study findByStudyId(String studyId) {
+        return studyRepository.findByStudyId(studyId).orElseThrow(NotExistStudyException::new);
+    }
+
     //
     // private methods
     //
