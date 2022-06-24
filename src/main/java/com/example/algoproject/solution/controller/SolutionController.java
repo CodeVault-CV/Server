@@ -23,7 +23,7 @@ public class SolutionController {
 
     @ApiOperation(value="솔루션 조회", notes="제출한 솔루션 있으면 코드&리드미 파일 올라가 있는 s3 링크 반환. 없으면 null")
     @GetMapping("/{solutionId}")
-    public CommonResponse solutionDetail(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @PathVariable("solutionId") Long solutionId) {
+    public CommonResponse detail(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @PathVariable("solutionId") Long solutionId) {
         return solutionService.detail(cudVO, solutionId);
     }
 
