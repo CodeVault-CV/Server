@@ -75,6 +75,11 @@ public class ProblemService {
         return responseService.getListResponse(Platform.getList());
     }
 
+    @Transactional
+    public Problem findById(Long id) {
+        return problemRepository.findById(id).orElseThrow(NotExistProblemException::new);
+    }
+
     //
     // private
     //
