@@ -62,6 +62,11 @@ public class SolutionService {
         log.info("s3 repository path : " + s3Path);
 
         long date = System.currentTimeMillis();
+        int i = code.getOriginalFilename().lastIndexOf("."); // 코드파일 확장자 분리
+        String language = "";
+        if (i > 0) {
+            language = code.getOriginalFilename().substring(i + 1);
+        }
 
         /* readme file 생성 메소드 */
         MultipartFile readMe = readMeUtil.makeReadMe(addSolution.getHeader(), addSolution.getContent());
@@ -78,7 +83,7 @@ public class SolutionService {
         readMeUtil.removeReadMe(readMe);
 
         /* DB에 저장 */
-        solutionRepository.save(new Solution(user, problem, codeUrl, readMeUrl, new Timestamp(date), addSolution.getTime(), addSolution.getMemory()));
+        solutionRepository.save(new Solution(user, problem, codeUrl, readMeUrl, new Timestamp(date), addSolution.getTime(), addSolution.getMemory(), language));
 
         return responseService.getSuccessResponse();
     }
