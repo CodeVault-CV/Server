@@ -41,6 +41,8 @@ public class Solution {
 
     private String memory; //공간복잡도
 
+    private Language language; //사용 언어
+
     @OneToMany(
             mappedBy = "solution",
             cascade = CascadeType.ALL,
@@ -48,7 +50,7 @@ public class Solution {
     )
     private List<Comment> comments = new ArrayList<>();
 
-    public Solution(User userId, Problem problemId, String codeUrl, String readMeUrl, Timestamp date, String time, String memory) {
+    public Solution(User userId, Problem problemId, String codeUrl, String readMeUrl, Timestamp date, String time, String memory, String language) {
         this.userId = userId;
         this.problemId = problemId;
         this.codeUrl = codeUrl;
@@ -56,6 +58,7 @@ public class Solution {
         this.date = date;
         this.time = time;
         this.memory = memory;
+        this.language = Language.valueOf(language);
     }
 
     public void addComment(Comment comment) {
