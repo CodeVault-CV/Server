@@ -49,7 +49,7 @@ public class Solution {
     )
     private List<Review> reviews = new ArrayList<>();
 
-    public Solution(User user, Problem problem, String codeUrl, String readMeUrl, Timestamp date, String time, String memory) {
+    public Solution(User user, Problem problem, String codeUrl, String readMeUrl, Timestamp date, String time, String memory, String language) {
         this.user = user;
         this.problem = problem;
         this.codeUrl = codeUrl;

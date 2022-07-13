@@ -51,9 +51,9 @@ public class SolutionService {
 
     public CommonResponse upload(CustomUserDetailsVO cudVO, AddSolution addSolution, MultipartFile code) throws IOException {
 
-        User user = userRepository.findByUserId(cudVO.getUsername()).orElseThrow(NotExistUserException::new);
-        Problem problem = problemRepository.findById(addSolution.getProblemId()).orElseThrow(NotExistProblemException::new);
-        Study study = studyRepository.findByStudyId(problem.getSession().getStudy().getStudyId()).orElseThrow(NotExistStudyException::new);
+        User user = userService.findByUserId(cudVO.getUsername());
+        Problem problem = problemService.findById(addSolution.getProblemId());
+        Study study = studyService.findByStudyId(problem.getSession().getStudy().getStudyId());
 
         String gitHubPath = pathUtil.makeGitHubPath(problem, user.getName());
         String s3Path = pathUtil.makeS3Path(study.getRepositoryName(), problem, user.getName());
@@ -100,8 +100,8 @@ public class SolutionService {
 
         User user = userService.findByUserId(cudVO.getUsername());
         Solution solution = solutionRepository.findById(solutionId).orElseThrow(NotExistSolutionException::new);
-        Problem problem = problemRepository.findById(updateSolution.getProblemId()).orElseThrow(NotExistProblemException::new);
-        Study study = studyRepository.findByStudyId(problem.getSession().getStudy().getStudyId()).orElseThrow(NotExistStudyException::new);
+        Problem problem = problemService.findById(updateSolution.getProblemId());
+        Study study = studyService.findByStudyId(problem.getSession().getStudy().getStudyId());
 
         String gitHubPath = pathUtil.makeGitHubPath(solution.getProblem(), user.getName());
         String s3Path = pathUtil.makeS3Path(study.getRepositoryName(), problem, user.getName());
