@@ -1,4 +1,4 @@
-package com.example.algoproject.comment.dto;
+package com.example.algoproject.review.dto;
 
 import lombok.Data;
 
@@ -6,7 +6,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 @Data
-public class AddComment {
+public class AddReview {
     @NotNull
     private Long solutionId;
 

@@ -1,6 +1,6 @@
 package com.example.algoproject.study.domain;
 
-import com.example.algoproject.problem.domain.Problem;
+import com.example.algoproject.session.domain.Session;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -30,7 +30,7 @@ public class Study {
             cascade = {CascadeType.ALL},
             orphanRemoval = true
     )
-    private List<Problem> problems = new ArrayList<>();
+    private List<Session> sessions = new ArrayList<>();
 
     public Study(String studyId, String name, String leaderId, String repositoryName, String repositoryUrl) {
         this.studyId = studyId;
@@ -40,12 +40,10 @@ public class Study {
         this.repositoryUrl = repositoryUrl;
     }
 
-    public void addProblem(Problem problem) {
-        this.problems.add(problem);
+    public void addSession(Session session) {
+        this.sessions.add(session);
 
-        // 스터디에 문제가 저장되어있지 않은 경우
-        if(problem.getStudy() != this)
-            // 문제 저장
-            problem.setStudy(this);
+        if(session.getStudy() != this)
+            session.setStudy(this);
     }
 }

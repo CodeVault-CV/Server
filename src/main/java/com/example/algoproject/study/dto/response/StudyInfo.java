@@ -1,6 +1,5 @@
 package com.example.algoproject.study.dto.response;
 
-
 import lombok.Data;
 
 import javax.validation.constraints.NotBlank;

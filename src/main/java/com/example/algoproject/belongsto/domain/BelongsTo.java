@@ -20,7 +20,7 @@ public class BelongsTo {
     private boolean accepted;
 
     @ManyToOne
-    @JoinColumn(name = "member_id")
+    @JoinColumn(name = "user_id")
     private User member;
 
     @ManyToOne

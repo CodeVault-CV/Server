@@ -1,10 +1,14 @@
 package com.example.algoproject.problem.domain;
 
+import com.example.algoproject.problem.dto.request.AddProblem;
+import com.example.algoproject.session.domain.Session;
+import com.example.algoproject.solution.domain.Solution;
 import com.example.algoproject.study.domain.Study;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -13,6 +17,7 @@ import java.util.List;
 public class Problem {
 
     @Id
+    @Column(name = "problem_id")
     @GeneratedValue
     private Long id;
 
@@ -24,30 +29,46 @@ public class Problem {
 
     private Platform platform;
 
-    private int week;
-
-    @ElementCollection
-    private List<String> types;
-
     @ManyToOne
-    @JoinColumn(name = "study_id")
-    private Study study;
+    @JoinColumn(name = "session_id")
+    private Session session;
 
-    public Problem(String number, String name, String url, String platform, int week, List<String> types) {
-        this.number = number;
-        this.name = name;
-        this.url = url;
-        this.platform = Platform.valueOf(platform);
-        this.week = week;
-        this.types = types;
+    @OneToMany(
+            mappedBy = "problem",
+            cascade = {CascadeType.ALL},
+            orphanRemoval = true
+    )
+    private List<Solution> solutions = new ArrayList<>();
+
+    public Problem(AddProblem request) {
+        this.number = request.getNumber();
+        this.name = request.getName();
+        this.url = setUrl(request.getPlatform(), request.getNumber());
+        this.platform = Platform.valueOf(request.getPlatform());
     }
 
-    public void setStudy(Study study) {
-        this.study = study;
+    private String setUrl(String platform, String number) {
+        StringBuilder sb = new StringBuilder();
 
-        // 스터디에 현재 문제가 존재하지 않는다면
-        if(!study.getProblems().contains(this))
-            // 문제 추가
-            study.getProblems().add(this);
+        if (platform.equals("Programmers"))
+            sb.append("https://programmers.co.kr/learn/courses/30/lessons/");
+        else
+            sb.append("https://www.acmicpc.net/problem/");
+
+        return sb.append(number).toString();
+    }
+
+    public void addSolution(Solution solution) {
+        this.solutions.add(solution);
+
+        if(solution.getProblem() != this)
+            solution.setProblem(this);
+    }
+
+    public void setSession(Session session) {
+        this.session = session;
+
+        if(!session.getProblems().contains(this))
+            session.getProblems().add(this);
     }
 }

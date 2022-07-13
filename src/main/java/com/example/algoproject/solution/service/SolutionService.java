@@ -51,9 +51,9 @@ public class SolutionService {
 
     public CommonResponse upload(CustomUserDetailsVO cudVO, AddSolution addSolution, MultipartFile code) throws IOException {
 
-        User user = userService.findByUserId(cudVO.getUsername());
-        Problem problem = problemService.findById(addSolution.getProblemId());
-        Study study = studyService.findByStudyId(problem.getStudy().getStudyId());
+        User user = userRepository.findByUserId(cudVO.getUsername()).orElseThrow(NotExistUserException::new);
+        Problem problem = problemRepository.findById(addSolution.getProblemId()).orElseThrow(NotExistProblemException::new);
+        Study study = studyRepository.findByStudyId(problem.getSession().getStudy().getStudyId()).orElseThrow(NotExistStudyException::new);
 
         String gitHubPath = pathUtil.makeGitHubPath(problem, user.getName());
         String s3Path = pathUtil.makeS3Path(study.getRepositoryName(), problem, user.getName());
@@ -91,17 +91,19 @@ public class SolutionService {
     public CommonResponse detail(CustomUserDetailsVO cudVO, Long solutionId) {
 
         Solution solution = solutionRepository.findById(solutionId).orElseThrow(NotExistSolutionException::new);
-        return responseService.getSingleResponse(new SolutionInfo(solution.getId(), solution.getCodeUrl(), solution.getReadMeUrl(), solution.getDate(), solution.getTime(), solution.getMemory(), solution.getComments()));
+
+        return responseService.getSingleResponse(new SolutionInfo(solution.getId(), solution.getCodeUrl(), solution.getReadMeUrl(), solution.getDate(), solution.getTime(), solution.getMemory(), solution.getReviews()));
+
     }
 
     public CommonResponse update(CustomUserDetailsVO cudVO, Long solutionId, UpdateSolution updateSolution, MultipartFile code) throws IOException {
 
         User user = userService.findByUserId(cudVO.getUsername());
         Solution solution = solutionRepository.findById(solutionId).orElseThrow(NotExistSolutionException::new);
-        Problem problem = problemService.findById(updateSolution.getProblemId());
-        Study study = studyService.findByStudyId(problem.getStudy().getStudyId());
+        Problem problem = problemRepository.findById(updateSolution.getProblemId()).orElseThrow(NotExistProblemException::new);
+        Study study = studyRepository.findByStudyId(problem.getSession().getStudy().getStudyId()).orElseThrow(NotExistStudyException::new);
 
-        String gitHubPath = pathUtil.makeGitHubPath(solution.getProblemId(), user.getName());
+        String gitHubPath = pathUtil.makeGitHubPath(solution.getProblem(), user.getName());
         String s3Path = pathUtil.makeS3Path(study.getRepositoryName(), problem, user.getName());
 
         /* readme file 생성 메소드 */

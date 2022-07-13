@@ -1,4 +1,4 @@
-package com.example.algoproject.comment.domain;
+package com.example.algoproject.review.domain;
 
 import com.example.algoproject.solution.domain.Solution;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -13,7 +13,7 @@ import java.sql.Timestamp;
 @NoArgsConstructor
 @Getter
 @Entity
-public class Comment {
+public class Review {
     @Id
     @GeneratedValue
     private Long id;
@@ -36,15 +36,15 @@ public class Comment {
     @JoinColumn(name = "solution_id")
     private Solution solution;
 
-    public Comment(String writerId, String content) {
+    public Review(String writerId, String content) {
         this.writerId = writerId;
         this.content = content;
     }
 
     public void setSolution(Solution solution) {
         this.solution = solution;
-        if(!solution.getComments().contains(this))
-            solution.getComments().add(this);
+        if(!solution.getReviews().contains(this))
+            solution.getReviews().add(this);
     }
 
     public void setContent(String content) {
