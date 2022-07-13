@@ -63,6 +63,11 @@ public class ProblemService {
                 .orElseThrow(NotExistProblemException::new);
     }
 
+    @Transactional
+    public Problem findById(Long id) {
+        return problemRepository.findById(id).orElseThrow(NotExistProblemException::new);
+    }
+
     //
     // private
     //

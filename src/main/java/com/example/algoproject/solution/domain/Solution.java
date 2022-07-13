@@ -40,6 +40,8 @@ public class Solution {
 
     private String memory; //공간복잡도
 
+    private Language language; //사용 언어
+
     @OneToMany(
             mappedBy = "solution",
             cascade = CascadeType.ALL,
@@ -55,6 +57,7 @@ public class Solution {
         this.date = date;
         this.time = time;
         this.memory = memory;
+        this.language = Language.valueOf(language);
     }
 
     public void addReview(Review review) {
