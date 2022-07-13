@@ -9,8 +9,8 @@ import com.example.algoproject.problem.dto.request.AddProblem;
 import com.example.algoproject.problem.dto.request.ProblemWeekList;
 import com.example.algoproject.problem.dto.response.ProblemInfo;
 import com.example.algoproject.problem.repository.ProblemRepository;
-import com.example.algoproject.study.domain.Study;
-import com.example.algoproject.study.service.StudyService;
+import com.example.algoproject.session.domain.Session;
+import com.example.algoproject.session.service.SessionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,75 +25,52 @@ import java.util.List;
 public class ProblemService {
 
     private final ProblemRepository problemRepository;
-    private final StudyService studyService;
     private final ResponseService responseService;
+    private final SessionService sessionService;
 
     @Transactional
     public CommonResponse create(AddProblem request) {
 
-        Study study = studyService.getStudy(request.getStudyId());
-        Problem problem = new Problem(request.getNumber(), request.getName(), request.getUrl(), request.getPlatform(), request.getWeek(), request.getTypes());
+        Session session = sessionService.findById(request.getSessionId());
+        Problem problem = new Problem(request);
 
-        problem.setStudy(study);
-        study.addProblem(problem);
-        studyService.save(study);
+        problem.setSession(session);
+        session.addProblem(problem);
+        sessionService.save(session);
 
         return responseService.getSuccessResponse();
     }
 
     @Transactional
-    public CommonResponse detail(Long problemId) {
-        Problem problem = problemRepository.findById(problemId).orElseThrow(NotExistProblemException::new);
-
-        return responseService.getSingleResponse(new ProblemInfo(problem.getNumber(), problem.getName(),
-                problem.getUrl(), problem.getPlatform(), problem.getWeek(), problem.getTypes()));
+    public CommonResponse detail(Long id) {
+        return responseService.getSingleResponse(new ProblemInfo(findById(id)));
     }
 
     @Transactional
-    public CommonResponse list(String studyId) {
-        Study study = studyService.getStudy(studyId);
-
-        return responseService.getListResponse(getProblems(study));
+    public CommonResponse list(Long sessionId) {
+        return responseService.getListResponse(getProblemInfos(sessionService.findById(sessionId).getProblems()));
     }
 
     @Transactional
-    public CommonResponse weekList(ProblemWeekList request) {
-        Study study = studyService.getStudy(request.getStudyId());
-
-        return responseService.getListResponse(getWeekProblems(study, request.getWeek()));
-    }
-
-    @Transactional
-    public CommonResponse delete(Long problemId) {
-        Problem problem = problemRepository.findById(problemId).orElseThrow(NotExistProblemException::new);
-        problemRepository.delete(problem);
+    public CommonResponse delete(Long id) {
+        problemRepository.delete(findById(id));
         return responseService.getSuccessResponse();
     }
 
     @Transactional
-    public CommonResponse getPlatforms() {
-        return responseService.getListResponse(Platform.getList());
+    public Problem findById(Long id) {
+        return problemRepository.findById(id)
+                .orElseThrow(NotExistProblemException::new);
     }
 
     //
     // private
     //
 
-    private List<ProblemInfo> getProblems(Study study) {
-        List<ProblemInfo> problems = new ArrayList<>();
-
-        for (Problem problem : problemRepository.findByStudy(study))
-            problems.add(new ProblemInfo(problem.getNumber(), problem.getName(), problem.getUrl(), problem.getPlatform(), problem.getWeek(), problem.getTypes()));
-
-        return problems;
-    }
-
-    private List<ProblemInfo> getWeekProblems(Study study, int week) {
-        List<ProblemInfo> problems = new ArrayList<>();
-
-        for (Problem problem : problemRepository.findByStudyAndWeek(study, week))
-            problems.add(new ProblemInfo(problem.getNumber(), problem.getName(), problem.getUrl(), problem.getPlatform(), problem.getWeek(), problem.getTypes()));
-
-        return problems;
+    private List<ProblemInfo> getProblemInfos(List<Problem> problems) {
+        List<ProblemInfo> infos = new ArrayList<>();
+        for (Problem problem : problems)
+            infos.add(new ProblemInfo(problem));
+        return infos;
     }
 }

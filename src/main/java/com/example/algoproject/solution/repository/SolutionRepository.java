@@ -11,5 +11,5 @@ import java.util.Optional;
 @Repository
 public interface SolutionRepository extends JpaRepository<Solution, Long> {
 
-    Optional<Solution> findByUserIdAndProblemId(User userId, Problem problem);
+    Optional<Solution> findByUserAndProblem(User userId, Problem problem);
 }

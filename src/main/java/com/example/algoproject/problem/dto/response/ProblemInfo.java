@@ -1,6 +1,9 @@
 package com.example.algoproject.problem.dto.response;
 
 import com.example.algoproject.problem.domain.Platform;
+import com.example.algoproject.problem.domain.Problem;
+import com.example.algoproject.session.domain.Session;
+import com.example.algoproject.solution.domain.Solution;
 import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
@@ -22,18 +25,13 @@ public class ProblemInfo {
     @NotNull
     private Platform platform;
 
-    @NotNull
-    private int week;
+    private List<Solution> solutions;
 
-    @NotNull
-    private List<String> types;
-
-    public ProblemInfo(String number, String name, String url, Platform platform, int week, List<String> types) {
-        this.number = number;
-        this.name = name;
-        this.url = url;
-        this.platform = platform;
-        this.week = week;
-        this.types = types;
+    public ProblemInfo(Problem problem) {
+        this.number = problem.getNumber();
+        this.name = problem.getName();
+        this.url = problem.getUrl();
+        this.platform = problem.getPlatform();
+        this.solutions = problem.getSolutions();
     }
 }

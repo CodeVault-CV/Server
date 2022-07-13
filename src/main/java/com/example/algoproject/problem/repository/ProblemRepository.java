@@ -8,9 +8,4 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ProblemRepository extends JpaRepository<Problem, Long> {
-    Optional<Problem> findById(Long id);
-
-    List<Problem> findByStudy(Study study);
-
-    List<Problem> findByStudyAndWeek(Study study, int week);
 }

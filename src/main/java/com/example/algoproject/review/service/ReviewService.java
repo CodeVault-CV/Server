@@ -1,9 +1,9 @@
-package com.example.algoproject.comment.service;
+package com.example.algoproject.review.service;
 
-import com.example.algoproject.comment.domain.Comment;
-import com.example.algoproject.comment.dto.AddComment;
-import com.example.algoproject.comment.dto.UpdateComment;
-import com.example.algoproject.comment.repository.CommentRepository;
+import com.example.algoproject.review.domain.Review;
+import com.example.algoproject.review.dto.AddReview;
+import com.example.algoproject.review.dto.UpdateReview;
+import com.example.algoproject.review.repository.ReviewRepository;
 import com.example.algoproject.errors.exception.NotExistCommentException;
 import com.example.algoproject.errors.exception.NotWriterUserException;
 import com.example.algoproject.errors.response.CommonResponse;
@@ -19,23 +19,23 @@ import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 @Service
-public class CommentService {
+public class ReviewService {
 
-    private final CommentRepository commentRepository;
+    private final ReviewRepository reviewRepository;
     private final ResponseService responseService;
     private final UserService userService;
     private final SolutionService solutionService;
 
     @Transactional
-    public CommonResponse create(CustomUserDetailsVO cudVO, AddComment request) {
+    public CommonResponse create(CustomUserDetailsVO cudVO, AddReview request) {
         User user = userService.findByUserId(cudVO.getUsername());
         Solution solution = solutionService.findById(request.getSolutionId());
 
-        Comment comment = new Comment(user.getUserId(), request.getContent());
+        Review review = new Review(user.getUserId(), request.getContent());
 
-        commentRepository.save(comment);
+        reviewRepository.save(review);
 
-        solution.addComment(comment);
+        solution.addReview(review);
 
         solutionService.save(solution);
 
@@ -43,18 +43,18 @@ public class CommentService {
     }
 
     @Transactional
-    public CommonResponse update(CustomUserDetailsVO cudVO, UpdateComment request) {
+    public CommonResponse update(CustomUserDetailsVO cudVO, UpdateReview request) {
 
         User user = userService.findByUserId(cudVO.getUsername());
-        Comment comment = commentRepository.findById(request.getId()).orElseThrow(NotExistCommentException::new);
+        Review review = reviewRepository.findById(request.getId()).orElseThrow(NotExistCommentException::new);
 
         // 본인이 아닌 경우 글을 수정할 수 없음
-        if(!comment.getWriterId().equals(user.getUserId()))
+        if(!review.getWriterId().equals(user.getUserId()))
             throw new NotWriterUserException();
 
-        comment.setContent(request.getContent());
+        review.setContent(request.getContent());
 
-        commentRepository.save(comment);
+        reviewRepository.save(review);
 
         return responseService.getSuccessResponse();
     }
@@ -62,13 +62,13 @@ public class CommentService {
     @Transactional
     public CommonResponse delete(CustomUserDetailsVO cudVO, Long commentId) {
         User user = userService.findByUserId(cudVO.getUsername());
-        Comment comment = commentRepository.findById(commentId).orElseThrow(NotExistCommentException::new);
+        Review review = reviewRepository.findById(commentId).orElseThrow(NotExistCommentException::new);
 
         // 본인이 아닌 경우 글을 삭제할 수 없음
-        if(!comment.getWriterId().equals(user.getUserId()))
+        if(!review.getWriterId().equals(user.getUserId()))
             throw new NotWriterUserException();
 
-        commentRepository.delete(comment);
+        reviewRepository.delete(review);
 
         return responseService.getSuccessResponse();
     }

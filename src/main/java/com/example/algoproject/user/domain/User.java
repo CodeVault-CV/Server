@@ -3,6 +3,7 @@ package com.example.algoproject.user.domain;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 
@@ -11,6 +12,7 @@ import javax.persistence.Id;
 @Entity
 public class User {
     @Id
+    @Column(name = "user_id")
     private String userId;
 
     private String name;

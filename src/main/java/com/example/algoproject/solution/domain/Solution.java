@@ -1,9 +1,8 @@
 package com.example.algoproject.solution.domain;
 
-import com.example.algoproject.comment.domain.Comment;
+import com.example.algoproject.review.domain.Review;
 import com.example.algoproject.problem.domain.Problem;
 import com.example.algoproject.user.domain.User;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -25,11 +24,11 @@ public class Solution {
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    private User userId;
+    private User user;
 
     @ManyToOne
     @JoinColumn(name = "problem_id")
-    private Problem problemId;
+    private Problem problem;
 
     private String codeUrl;
 
@@ -46,11 +45,11 @@ public class Solution {
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
-    private List<Comment> comments = new ArrayList<>();
+    private List<Review> reviews = new ArrayList<>();
 
-    public Solution(User userId, Problem problemId, String codeUrl, String readMeUrl, Timestamp date, String time, String memory) {
-        this.userId = userId;
-        this.problemId = problemId;
+    public Solution(User user, Problem problem, String codeUrl, String readMeUrl, Timestamp date, String time, String memory) {
+        this.user = user;
+        this.problem = problem;
         this.codeUrl = codeUrl;
         this.readMeUrl = readMeUrl;
         this.date = date;
@@ -58,9 +57,16 @@ public class Solution {
         this.memory = memory;
     }
 
-    public void addComment(Comment comment) {
-        this.comments.add(comment);
-        if(comment.getSolution() != this)
-            comment.setSolution(this);
+    public void addReview(Review review) {
+        this.reviews.add(review);
+        if(review.getSolution() != this)
+            review.setSolution(this);
+    }
+
+    public void setProblem(Problem problem) {
+        this.problem = problem;
+
+        if(!problem.getSolutions().contains(this))
+            problem.getSolutions().add(this);
     }
 }
