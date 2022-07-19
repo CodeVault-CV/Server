@@ -1,5 +1,5 @@
 plugins {
-	id 'org.springframework.boot' version '2.4.5'
+	id 'org.springframework.boot' version '2.7.1'
 	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
 	id 'java'
 }
@@ -33,9 +33,8 @@ dependencies {
 	//spring security
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 
-	// swagger ui
-	implementation group: 'io.springfox', name: 'springfox-swagger-ui', version: '2.9.2'
-	implementation group: 'io.springfox', name: 'springfox-swagger2', version: '2.9.2'
+	// swagger
+	implementation 'org.springdoc:springdoc-openapi-ui:1.6.9'
 
 	//aws
 	implementation 'io.awspring.cloud:spring-cloud-starter-aws:2.3.1'
