@@ -9,13 +9,10 @@ import java.util.Collection;
 public class CustomUserDetailsVO implements UserDetails {
 
     private String userId;
-    private String name;
 
     public static CustomUserDetailsVO toVO(User user) {
         CustomUserDetailsVO customUserDetailsVO = new CustomUserDetailsVO();
-        customUserDetailsVO.userId = user.getUserId();
-        customUserDetailsVO.name = user.getName();
-
+        customUserDetailsVO.userId = user.getId();
         return customUserDetailsVO;
     }
 

@@ -17,11 +17,15 @@ public class GlobalExceptionHandler {
     private final ResponseService responseService;
 
     @ExceptionHandler({NotExistUserException.class, NotExistStudyException.class, NotExistProblemException.class,
-            NotExistSolutionException.class, FailedResponseException.class, NotLeaderUserException.class,
-            AlreadyExistMemberException.class, NotExistCommentException.class, NotWriterUserException.class,
-            NotExistSessionException.class})
+            NotExistSolutionException.class, NotLeaderUserException.class, AlreadyExistMemberException.class,
+            NotExistCommentException.class, NotWriterUserException.class, NotExistSessionException.class})
     CommonResponse handleBadRequestException(Exception ex) {
         return handleBadRequest(ex);
+    }
+
+    @ExceptionHandler({FailedResponseException.class})
+    CommonResponse handleUnauthorizedException(Exception ex) {
+        return handleUnauthorized(ex);
     }
 
     @ExceptionHandler(Exception.class)
@@ -32,6 +36,11 @@ public class GlobalExceptionHandler {
     private CommonResponse handleBadRequest (Exception ex) {
         log.info(ex.getMessage());
         return responseService.getErrorResponse(HttpStatus.BAD_REQUEST.value(), ex.getMessage());
+    }
+
+    private CommonResponse handleUnauthorized(Exception ex) {
+        log.info(ex.getMessage());
+        return responseService.getErrorResponse(HttpStatus.UNAUTHORIZED.value(), ex.getMessage());
     }
 
     private CommonResponse handleInternalServerError (Exception ex) {
