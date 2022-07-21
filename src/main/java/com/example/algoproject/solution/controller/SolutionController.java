@@ -46,4 +46,10 @@ public class SolutionController {
                                  @RequestPart(value="code", required = false) MultipartFile code, @RequestPart(value="solution", required = false) UpdateSolution solution, @PathVariable("solutionId") Long solutionId) throws IOException {
         return solutionService.update(cudVO, solutionId, solution, code);
     }
+
+    @Operation(summary="솔루션 삭제", description="등록한 솔루션을 삭제")
+    @DeleteMapping("/delete/{solutionId}")
+    public CommonResponse solutionRemove(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @PathVariable("solutionId") Long solutionId) {
+        return solutionService.delete(cudVO, solutionId);
+    }
 }

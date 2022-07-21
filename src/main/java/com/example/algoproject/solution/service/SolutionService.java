@@ -1,5 +1,7 @@
 package com.example.algoproject.solution.service;
 
+import com.example.algoproject.belongsto.domain.BelongsTo;
+import com.example.algoproject.belongsto.service.BelongsToService;
 import com.example.algoproject.errors.exception.NotExistSolutionException;
 import com.example.algoproject.errors.exception.NotMySolutionException;
 import com.example.algoproject.errors.response.CommonResponse;
@@ -155,6 +157,18 @@ public class SolutionService {
         solution.setReadMeUrl(readMeUrl);
         solution.setCodeUrl(codeUrl);
         solutionRepository.save(solution);
+
+        return responseService.getSuccessResponse();
+    }
+
+    public CommonResponse delete(CustomUserDetailsVO cudVO, Long solutionId) {
+
+        Solution solution = solutionRepository.findById(solutionId).orElseThrow(NotExistSolutionException::new);
+
+        if (!cudVO.getUsername().equals(solution.getUser().getUserId())) // 내 솔루션 아니면 삭제 불가
+            throw new NotMySolutionException();
+
+        solutionRepository.delete(solution); // 솔루션 삭제
 
         return responseService.getSuccessResponse();
     }
