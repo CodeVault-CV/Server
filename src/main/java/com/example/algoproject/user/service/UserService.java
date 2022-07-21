@@ -7,7 +7,6 @@ import com.example.algoproject.errors.response.ResponseService;
 import com.example.algoproject.user.domain.User;
 import com.example.algoproject.user.dto.LoginDto;
 import com.example.algoproject.user.dto.TokenDto;
-import com.example.algoproject.user.dto.UserInfo;
 import com.example.algoproject.user.repository.UserRepository;
 import com.example.algoproject.security.JWTUtil;
 import lombok.RequiredArgsConstructor;
@@ -17,10 +16,9 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -43,36 +41,30 @@ public class UserService {
     public CommonResponse login(String code) {
 
         // {code} 를 이용해 Github 에 access_token 요청
-        TokenDto tokenDto = accessTokenResponse(code);
+        String token = accessTokenResponse(code);
 
         // 받은 access_token 으로 Github 에 사용자 정보 요청
-        Map<String, Object> userInfoResponse = userInfoResponse(tokenDto.getAccess_token());
+        Map<String, Object> userInfoResponse = userInfoResponse(token);
 
-        Optional<User> user = userRepository.findByUserId(userInfoResponse.get("id").toString());
+        Optional<User> user = userRepository.findById(userInfoResponse.get("id").toString());
 
         if (user.isEmpty()) {
+            // 새로운 유저를 데이터베이스에 추가
             log.info("Add new user to database... " + userInfoResponse.get("login"));
-            userRepository.save(new User(userInfoResponse.get("id").toString(), userInfoResponse.get("login").toString(), tokenDto.getAccess_token(), userInfoResponse.get("avatar_url").toString()));
+            userRepository.save(new User(userInfoResponse.get("id").toString(), userInfoResponse.get("login").toString(), token, userInfoResponse.get("avatar_url").toString()));
         }
         else {
             log.info(user.get().getName() + " User already exists. Renew User Name & Access Token...");
             // 유저의 이름과 프로필 사진이 변경되었을 수도 있기 때문에 accessToken 과 같이 갱신해 준다
-            user.get().update(tokenDto.getAccess_token(), userInfoResponse.get("login").toString(), userInfoResponse.get("avatar_url").toString());
+            user.get().update(token, userInfoResponse.get("login").toString(), userInfoResponse.get("avatar_url").toString());
             userRepository.save(user.get());
         }
-
         return responseService.getSingleResponse(new LoginDto(jwtUtil.makeJWT(userInfoResponse.get("id").toString()), userInfoResponse.get("login").toString()));
     }
 
     @Transactional
-    public CommonResponse profile(String name) {
-        User user = userRepository.findByName(name).orElseThrow(NotExistUserException::new);
-        return responseService.getSingleResponse(new UserInfo(user.getName(), user.getImageUrl()));
-    }
-
-    @Transactional
-    public User findByUserId(String userId) {
-        return userRepository.findByUserId(userId).orElseThrow(NotExistUserException::new);
+    public User findByUserId(String id) {
+        return userRepository.findById(id).orElseThrow(NotExistUserException::new);
     }
 
     @Transactional
@@ -84,19 +76,18 @@ public class UserService {
     // private
     //
 
-    private TokenDto accessTokenResponse(String code) {
+    private String accessTokenResponse(String code) {
 
         HttpHeaders headers = new HttpHeaders();
         headers.add("Accept", "application/json");
         headers.add("User-Agent", "api-test");
 
-        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("client_id", clientId);
-        params.add("client_secret", clientSecret);
-        params.add("code", code);
+        Map<String, String> params = new LinkedHashMap<>();
+        params.put("client_id", clientId);
+        params.put("client_secret", clientSecret);
+        params.put("code", code);
 
-        HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(params, headers);
-
+        HttpEntity<Map<String, String>> entity = new HttpEntity<>(params, headers);
         RestTemplate restTemplate = new RestTemplate();
 
         ResponseEntity<TokenDto> response = restTemplate.exchange(
@@ -106,33 +97,32 @@ public class UserService {
                 TokenDto.class
         );
 
-        if(!response.getStatusCode().is2xxSuccessful())
-            throw new FailedResponseException("github api에서 accesstoken 받는 것을 실패했습니다");
+        // code가 유효하지 않을 때
+        if(response.getBody().getAccess_token() == null)
+            throw new FailedResponseException("code가 유효하지 않거나 파기되었습니다");
 
-        return response.getBody();
+        return response.getBody().getAccess_token();
     }
 
-    private Map<String, Object> userInfoResponse(String accessToken) {
+    private Map<String, Object> userInfoResponse(String token) {
 
         HttpHeaders headers = new HttpHeaders();
         headers.add("User-Agent", "api-test");
-        headers.add("Authorization", "token " + accessToken);
+        headers.add("Authorization", "token " + token);
         headers.add("Accept", "application/vnd.github.v3+json");
 
         HttpEntity<String> entity = new HttpEntity<>(headers);
-
         RestTemplate restTemplate = new RestTemplate();
 
-        ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
-                "https://api.github.com/user",
-                HttpMethod.GET,
-                entity,
-                new ParameterizedTypeReference<>() {
-                });
-
-        if(!response.getStatusCode().is2xxSuccessful())
-            throw new FailedResponseException("github api에서 유저 정보를 불러오는 것을 실패했습니다");
-
-        return response.getBody();
+        try {
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                    "https://api.github.com/user",
+                    HttpMethod.GET,
+                    entity,
+                    new ParameterizedTypeReference<>(){});
+            return response.getBody();
+        } catch (RuntimeException ex) { // accessToken 이 유효하지 않을 때는 code에서 제대로 왔다면 거의 발생하지 않음
+            throw new FailedResponseException("유효하지 않은 Access Token 입니다");
+        }
     }
 }

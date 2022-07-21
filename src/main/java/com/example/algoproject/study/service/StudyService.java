@@ -77,7 +77,7 @@ public class StudyService {
         // 이미 존재 중인 멤버 인지 확인 하는 것 추가
         List<BelongsTo> members = belongsToService.findByStudy(study);
         for (BelongsTo belongsTo : members)
-            if (belongsTo.getMember().getUserId().equals(member.getUserId()))
+            if (belongsTo.getMember().getId().equals(member.getId()))
                 throw new AlreadyExistMemberException();
 
         // leader 가 github 에서 member 에게 study 레포지토리로 contributor 초대를 보냄
@@ -331,7 +331,7 @@ public class StudyService {
         for (Map<String, Object> response : responses)
             for (BelongsTo belongsTo : belongs)
                 // github api 를 이용해 조회한 contributor 가 새로 추가된 경우(초대를 받은 경우) 상태를 업데이트 해준다
-                if(response.get("id") == belongsTo.getMember().getUserId() && !belongsTo.isAccepted()){
+                if(response.get("id") == belongsTo.getMember().getId() && !belongsTo.isAccepted()){
                     belongsTo.acceptInvitation();
                     belongsToService.save(belongsTo);
                 }
