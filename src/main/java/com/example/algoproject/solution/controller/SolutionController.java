@@ -21,17 +21,23 @@ public class SolutionController {
 
     private final SolutionService solutionService;
 
+    @Operation(summary="솔루션 업로드", description="code와 message 반환")
+    @PostMapping(value="/create", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    public CommonResponse solutionAdd(@AuthenticationPrincipal CustomUserDetailsVO cudVO,
+                                 @RequestPart AddSolution solution, @RequestPart MultipartFile code) throws IOException {
+        return solutionService.create(cudVO, solution, code);
+    }
+
     @Operation(summary="솔루션 조회", description="제출한 솔루션 있으면 코드&리드미 파일 올라가 있는 s3 링크 반환. 없으면 null")
     @GetMapping("/{solutionId}")
-    public CommonResponse detail(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @PathVariable("solutionId") Long solutionId) {
+    public CommonResponse solutionDetail(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @PathVariable("solutionId") Long solutionId) {
         return solutionService.detail(cudVO, solutionId);
     }
 
-    @Operation(summary="솔루션 업로드", description="code와 message 반환")
-    @PostMapping(value="/upload", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE})
-    public CommonResponse upload(@AuthenticationPrincipal CustomUserDetailsVO cudVO,
-                                 @RequestPart AddSolution solution, @RequestPart MultipartFile code) throws IOException {
-        return solutionService.upload(cudVO, solution, code);
+    @Operation(summary="팀원들의 솔루션 등록 여부 조회", description="해당 문제를 풀어야하는 팀원들의 목록과 솔루션 등록 여부 list를 반환.")
+    @GetMapping("/list/{problemId}")
+    public CommonResponse solutionList(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @PathVariable("problemId") Long problemId) {
+        return solutionService.list(cudVO, problemId);
     }
 
     @Operation(summary="솔루션 업데이트", description="code와 message 반환")

@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public enum Language {
-    c, cpp, java, js, py;
+    c, cpp, java, js, py, none;
 
     public static List<String> getList() {
         return Arrays.stream(Language.values()).map(Enum::name).toList();

@@ -19,7 +19,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({NotExistUserException.class, NotExistStudyException.class, NotExistProblemException.class,
             NotExistSolutionException.class, FailedResponseException.class, NotLeaderUserException.class,
             AlreadyExistMemberException.class, NotExistCommentException.class, NotWriterUserException.class,
-            NotExistSessionException.class})
+            NotExistSessionException.class, NotMySolutionException.class})
     CommonResponse handleBadRequestException(Exception ex) {
         return handleBadRequest(ex);
     }

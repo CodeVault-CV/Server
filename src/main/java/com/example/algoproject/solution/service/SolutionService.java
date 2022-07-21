@@ -1,6 +1,7 @@
 package com.example.algoproject.solution.service;
 
 import com.example.algoproject.errors.exception.NotExistSolutionException;
+import com.example.algoproject.errors.exception.NotMySolutionException;
 import com.example.algoproject.errors.response.CommonResponse;
 import com.example.algoproject.errors.response.ResponseService;
 import com.example.algoproject.problem.domain.Problem;
@@ -11,6 +12,7 @@ import com.example.algoproject.solution.dto.request.AddSolution;
 import com.example.algoproject.solution.dto.request.CommitFileRequest;
 import com.example.algoproject.solution.dto.request.UpdateSolution;
 import com.example.algoproject.solution.dto.response.SolutionInfo;
+import com.example.algoproject.solution.dto.response.SolutionListInfo;
 import com.example.algoproject.solution.repository.SolutionRepository;
 import com.example.algoproject.study.domain.Study;
 import com.example.algoproject.study.repository.StudyRepository;
@@ -31,7 +33,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -43,13 +47,14 @@ public class SolutionService {
     private final UserService userService;
     private final ProblemService problemService;
     private final StudyService studyService;
+    private final BelongsToService belongsToService;
 
     private final ResponseService responseService;
     private final S3Uploader s3Uploader;
     private final PathUtil pathUtil;
     private final ReadMeUtil readMeUtil;
 
-    public CommonResponse upload(CustomUserDetailsVO cudVO, AddSolution addSolution, MultipartFile code) throws IOException {
+    public CommonResponse create(CustomUserDetailsVO cudVO, AddSolution addSolution, MultipartFile code) throws IOException {
 
         User user = userService.findByUserId(cudVO.getUsername());
         Problem problem = problemService.findById(addSolution.getProblemId());
@@ -94,6 +99,29 @@ public class SolutionService {
 
         return responseService.getSingleResponse(new SolutionInfo(solution.getId(), solution.getCodeUrl(), solution.getReadMeUrl(), solution.getDate(), solution.getTime(), solution.getMemory(), solution.getReviews()));
 
+    }
+
+    public CommonResponse list(CustomUserDetailsVO cudVO, Long problemId) {
+
+        Problem problem = problemService.findById(problemId);
+        Study study = studyService.findByStudyId(problem.getSession().getStudy().getStudyId());
+        List<BelongsTo> belongs =  belongsToService.findByStudy(study);
+        List<Solution> solutions = solutionRepository.findByProblem(problem); // null일 수도 있음
+        List<SolutionListInfo> list = new ArrayList<>();
+
+        for (User member: getMemberList(belongs)) { // 현재 스터디의 팀원들 중에서, probelmId를 푼 팀원은 언어와 풀이여부 true 반환. 안 풀었으면 false 반환.
+            System.out.println(member.getName());
+            SolutionListInfo info = new SolutionListInfo(member.getName(), member.getImageUrl(),false, "none"); // language enum 타입이라 null 안됨.. 일단 nont으로 해둠
+
+            for (Solution solution: solutions) {
+                if (solution.getUser().equals(member)) {
+                    info.setLanguage(solution.getLanguage());
+                    info.setSolve(true);
+                }
+            }
+            list.add(info);
+        }
+        return responseService.getListResponse(list);
     }
 
     public CommonResponse update(CustomUserDetailsVO cudVO, Long solutionId, UpdateSolution updateSolution, MultipartFile code) throws IOException {
@@ -160,8 +188,6 @@ public class SolutionService {
                     new ParameterizedTypeReference<>() {
                     });
 
-            log.info("get sha : " + response.getBody().get("sha").toString());
-
             commitFileResponse(response.getBody().get("sha").toString(), multipartFile, user, path, repoName, commitMessage);
         } catch (HttpClientErrorException e) { // 깃허브에 파일 존재 x. 새로 생성되는 파일인 경우 404 에러 뜸.
             commitFileResponse(null, multipartFile, user, path, repoName, commitMessage);
@@ -196,6 +222,16 @@ public class SolutionService {
         log.info("github path : " + path + multipartFile.getOriginalFilename());
 
         return response.getBody();
+    }
+
+    private List<User> getMemberList(List<BelongsTo> belongs) {
+
+        List<User> members = new ArrayList<>();
+
+        for (BelongsTo belongsTo : belongs)
+            members.add(belongsTo.getMember());
+
+        return members;
     }
 
 }
