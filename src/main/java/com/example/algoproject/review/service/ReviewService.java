@@ -31,7 +31,7 @@ public class ReviewService {
         User user = userService.findByUserId(cudVO.getUsername());
         Solution solution = solutionService.findById(request.getSolutionId());
 
-        Review review = new Review(user.getUserId(), request.getContent());
+        Review review = new Review(user.getId(), request.getContent());
 
         reviewRepository.save(review);
 
@@ -49,7 +49,7 @@ public class ReviewService {
         Review review = reviewRepository.findById(request.getId()).orElseThrow(NotExistCommentException::new);
 
         // 본인이 아닌 경우 글을 수정할 수 없음
-        if(!review.getWriterId().equals(user.getUserId()))
+        if(!review.getWriterId().equals(user.getId()))
             throw new NotWriterUserException();
 
         review.setContent(request.getContent());
@@ -65,7 +65,7 @@ public class ReviewService {
         Review review = reviewRepository.findById(commentId).orElseThrow(NotExistCommentException::new);
 
         // 본인이 아닌 경우 글을 삭제할 수 없음
-        if(!review.getWriterId().equals(user.getUserId()))
+        if(!review.getWriterId().equals(user.getId()))
             throw new NotWriterUserException();
 
         reviewRepository.delete(review);

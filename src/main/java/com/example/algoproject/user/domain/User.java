@@ -13,7 +13,7 @@ import javax.persistence.Id;
 public class User {
     @Id
     @Column(name = "user_id")
-    private String userId;
+    private String id;
 
     private String name;
 
@@ -21,8 +21,8 @@ public class User {
 
     private String imageUrl;
 
-    public User(String userId, String name, String accessToken, String imageUrl) {
-        this.userId = userId;
+    public User(String id, String name, String accessToken, String imageUrl) {
+        this.id = id;
         this.name = name;
         this.accessToken = accessToken;
         this.imageUrl = imageUrl;
