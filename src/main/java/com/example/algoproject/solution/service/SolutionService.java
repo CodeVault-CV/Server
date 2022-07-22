@@ -80,7 +80,7 @@ public class SolutionService {
 
         Solution solution = solutionRepository.findById(solutionId).orElseThrow(NotExistSolutionException::new);
 
-        return responseService.getSingleResponse(new SolutionInfo(solution.getId(), solution.getCodeUrl(), solution.getReadMeUrl(), solution.getDate(), solution.getTime(), solution.getMemory(), solution.getReviews()));
+        return responseService.getSingleResponse(new SolutionInfo(solution.getCode(), solution.getReadMe(), solution.getDate(), solution.getReviews()));
 
     }
 
@@ -93,11 +93,11 @@ public class SolutionService {
         List<SolutionListInfo> list = new ArrayList<>();
 
         for (User member: getMemberList(belongs)) { // 현재 스터디의 팀원들 중에서, probelmId를 푼 팀원은 언어와 풀이여부 true 반환. 안 풀었으면 false 반환.
-            System.out.println(member.getName());
-            SolutionListInfo info = new SolutionListInfo(member.getName(), member.getImageUrl(),false, "none"); // language enum 타입이라 null 안됨.. 일단 nont으로 해둠
+            SolutionListInfo info = new SolutionListInfo(false, null, member.getName(), member.getImageUrl(), "none"); // language enum 타입이라 null 안됨.. 일단 nont으로 해둠
 
             for (Solution solution: solutions) {
                 if (solution.getUser().equals(member)) {
+                    info.setSolutionId(solution.getId());
                     info.setLanguage(solution.getLanguage());
                     info.setSolve(true);
                 }
