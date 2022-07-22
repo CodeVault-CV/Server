@@ -11,32 +11,20 @@ import java.util.List;
 public class SolutionInfo {
 
     @NotBlank
-    private Long solutionId;
+    private String code;
 
     @NotBlank
-    private String codeUrl;
-
-    @NotBlank
-    private String readMeUrl;
+    private String readMe;
 
     @NotBlank
     private Timestamp date; //등록 날짜/시간
 
-    @NotBlank
-    private String time; //시간복잡도
-
-    @NotBlank
-    private String memory; //공간복잡도
-
     private List<Review> reviews;
 
-    public SolutionInfo(Long solutionId, String codeUrl, String readMeUrl, Timestamp date, String time, String memory, List<Review> reviews) {
-        this.solutionId = solutionId;
-        this.codeUrl = codeUrl;
-        this.readMeUrl = readMeUrl;
+    public SolutionInfo(String code, String readMe, Timestamp date, List<Review> reviews) {
+        this.code = code;
+        this.readMe = readMe;
         this.date = date;
-        this.time = time;
-        this.memory = memory;
         this.reviews = reviews;
     }
 }
