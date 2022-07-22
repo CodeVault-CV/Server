@@ -30,15 +30,11 @@ public class Solution {
     @JoinColumn(name = "problem_id")
     private Problem problem;
 
-    private String codeUrl;
+    private String code;
 
-    private String readMeUrl;
+    private String readMe;
 
     private Timestamp date; //등록 날짜/시간
-
-    private String time; //시간복잡도
-
-    private String memory; //공간복잡도
 
     private Language language; //사용 언어
 
@@ -49,14 +45,12 @@ public class Solution {
     )
     private List<Review> reviews = new ArrayList<>();
 
-    public Solution(User user, Problem problem, String codeUrl, String readMeUrl, Timestamp date, String time, String memory, String language) {
+    public Solution(User user, Problem problem, String code, String readMe, Timestamp date, String language) {
         this.user = user;
         this.problem = problem;
-        this.codeUrl = codeUrl;
-        this.readMeUrl = readMeUrl;
+        this.code = code;
+        this.readMe = readMe;
         this.date = date;
-        this.time = time;
-        this.memory = memory;
         this.language = Language.valueOf(language);
     }
 

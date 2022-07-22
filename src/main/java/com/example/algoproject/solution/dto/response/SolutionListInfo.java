@@ -11,21 +11,25 @@ import javax.validation.constraints.NotNull;
 public class SolutionListInfo {
 
     @NotBlank
-    private String name;
-
-    @NotBlank
-    private String url;
-
-    @NotBlank
     private boolean solve; // false: 안품, true: 품
 
     @Nullable
+    private Long solutionId;
+
+    @NotBlank
+    private String name;
+
+    @NotBlank
+    private String imageUrl;
+
+    @NotBlank
     private Language language; // solve가 flase면 blank(="") 반환
 
-    public SolutionListInfo(String name, String url, boolean solve, String language) {
-        this.name = name;
-        this.url = url;
+    public SolutionListInfo(boolean solve, Long solutionId, String name, String imageUrl, String language) {
         this.solve = solve;
+        this.solutionId = solutionId;
+        this.name = name;
+        this.imageUrl = imageUrl;
         this.language = Language.valueOf(language);
     }
 }
