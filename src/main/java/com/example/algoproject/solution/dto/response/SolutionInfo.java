@@ -3,6 +3,7 @@ package com.example.algoproject.solution.dto.response;
 import com.example.algoproject.review.domain.Review;
 import lombok.Data;
 
+import javax.persistence.Lob;
 import javax.validation.constraints.NotBlank;
 import java.sql.Timestamp;
 import java.util.List;
@@ -11,9 +12,11 @@ import java.util.List;
 public class SolutionInfo {
 
     @NotBlank
+    @Lob
     private String code;
 
     @NotBlank
+    @Lob
     private String readMe;
 
     @NotBlank

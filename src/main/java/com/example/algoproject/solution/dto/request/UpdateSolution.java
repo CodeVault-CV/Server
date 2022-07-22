@@ -2,6 +2,7 @@ package com.example.algoproject.solution.dto.request;
 
 import lombok.Data;
 
+import javax.persistence.Lob;
 import javax.validation.constraints.NotNull;
 
 @Data
@@ -11,9 +12,11 @@ public class UpdateSolution {
     private Long problemId;
 
     @NotNull
+    @Lob
     private String code;
 
     @NotNull
+    @Lob
     private String readMe;
 
     @NotNull
