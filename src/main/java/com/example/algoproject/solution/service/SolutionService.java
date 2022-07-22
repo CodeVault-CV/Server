@@ -107,7 +107,7 @@ public class SolutionService {
         return responseService.getListResponse(list);
     }
 
-    public CommonResponse update(CustomUserDetailsVO cudVO, Long solutionId, UpdateSolution updateSolution, MultipartFile code) throws IOException {
+    public CommonResponse update(CustomUserDetailsVO cudVO, Long solutionId, UpdateSolution updateSolution) throws IOException {
 
         User user = userService.findByUserId(cudVO.getUsername());
         Solution solution = solutionRepository.findById(solutionId).orElseThrow(NotExistSolutionException::new);
@@ -115,28 +115,18 @@ public class SolutionService {
         Study study = studyService.findByStudyId(problem.getSession().getStudy().getStudyId());
 
         String gitHubPath = pathUtil.makeGitHubPath(solution.getProblem(), user.getName());
-        String s3Path = pathUtil.makeS3Path(study.getRepositoryName(), problem, user.getName());
 
-        /* readme file 생성 메소드 */
-        MultipartFile readMe = readMeUtil.makeReadMe(updateSolution.getHeader(), updateSolution.getContent());
+        String commitMessage = pathUtil.makeCommitMessage(problem, user.getName()); // 커밋메세지 만듦
+        String fileName = problem.getNumber() + "." + updateSolution.getLanguage(); // ***이거 프론트에서 언어 어케 주는지에 따라 매핑 해줘야될듯....
 
         /* github에 file commit */
-        checkFileResponse(code, user, gitHubPath, study.getRepositoryName(), problem.getPlatform() + " [" + problem.getNumber() + "]" + problem.getName() + " By " + user.getName());
-        checkFileResponse(readMe, user, gitHubPath, study.getRepositoryName(), problem.getPlatform() + " [" + problem.getNumber() + "]" + problem.getName() + " By " + user.getName());
+        checkFileResponse(user, updateSolution.getCode(), fileName, commitMessage, gitHubPath, study.getRepositoryName());
+        checkFileResponse(user, updateSolution.getReadMe(), "README.md", commitMessage, gitHubPath, study.getRepositoryName());
 
-        /* s3에 file upload */
-        String codeUrl = s3Uploader.upload(code, s3Path);
-        String readMeUrl = s3Uploader.upload(readMe, s3Path);
-
-        /* local 리드미 삭제 */
-        readMeUtil.removeReadMe(readMe);
-
-        /* 메모리/시간복잡도, 등록시간 update */
-        solution.setMemory(updateSolution.getMemory());
-        solution.setTime(updateSolution.getTime());
         solution.setDate(new Timestamp(System.currentTimeMillis()));
-        solution.setReadMeUrl(readMeUrl);
-        solution.setCodeUrl(codeUrl);
+        solution.setCode(updateSolution.getCode());
+        solution.setReadMe(updateSolution.getReadMe());
+        solution.setLanguage(Language.valueOf(updateSolution.getLanguage()));
         solutionRepository.save(solution);
 
         return responseService.getSuccessResponse();
@@ -146,7 +136,7 @@ public class SolutionService {
 
         Solution solution = solutionRepository.findById(solutionId).orElseThrow(NotExistSolutionException::new);
 
-        if (!cudVO.getUsername().equals(solution.getUser().getUserId())) // 내 솔루션 아니면 삭제 불가
+        if (!cudVO.getUsername().equals(solution.getUser().getId())) // 내 솔루션 아니면 삭제 불가
             throw new NotMySolutionException();
 
         solutionRepository.delete(solution); // 솔루션 삭제

@@ -11,14 +11,11 @@ public class UpdateSolution {
     private Long problemId;
 
     @NotNull
-    private String header;
+    private String code;
 
     @NotNull
-    private String content;
+    private String readMe;
 
     @NotNull
-    private String time;
-
-    @NotNull
-    private String memory;
+    private String language;
 }

@@ -40,9 +40,8 @@ public class SolutionController {
 
     @Operation(summary="솔루션 업데이트", description="code와 message 반환")
     @PostMapping(value="/update/{solutionId}", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE})
-    public CommonResponse update(@AuthenticationPrincipal CustomUserDetailsVO cudVO,
-                                 @RequestPart(value="code", required = false) MultipartFile code, @RequestPart(value="solution", required = false) UpdateSolution solution, @PathVariable("solutionId") Long solutionId) throws IOException {
-        return solutionService.update(cudVO, solutionId, solution, code);
+    public CommonResponse update(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @RequestPart(value="solution") UpdateSolution solution, @PathVariable("solutionId") Long solutionId) throws IOException {
+        return solutionService.update(cudVO, solutionId, solution);
     }
 
     @Operation(summary="솔루션 삭제", description="등록한 솔루션을 삭제")
