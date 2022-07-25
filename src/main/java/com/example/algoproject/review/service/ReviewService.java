@@ -4,8 +4,8 @@ import com.example.algoproject.review.domain.Review;
 import com.example.algoproject.review.dto.AddReview;
 import com.example.algoproject.review.dto.UpdateReview;
 import com.example.algoproject.review.repository.ReviewRepository;
-import com.example.algoproject.errors.exception.NotExistCommentException;
-import com.example.algoproject.errors.exception.NotWriterUserException;
+import com.example.algoproject.errors.exception.notfound.NotExistCommentException;
+import com.example.algoproject.errors.exception.badrequest.NotWriterUserException;
 import com.example.algoproject.errors.response.CommonResponse;
 import com.example.algoproject.errors.response.ResponseService;
 import com.example.algoproject.solution.domain.Solution;
@@ -28,7 +28,7 @@ public class ReviewService {
 
     @Transactional
     public CommonResponse create(CustomUserDetailsVO cudVO, AddReview request) {
-        User user = userService.findByUserId(cudVO.getUsername());
+        User user = userService.findById(cudVO.getUsername());
         Solution solution = solutionService.findById(request.getSolutionId());
 
         Review review = new Review(user.getId(), request.getContent());
@@ -45,7 +45,7 @@ public class ReviewService {
     @Transactional
     public CommonResponse update(CustomUserDetailsVO cudVO, UpdateReview request) {
 
-        User user = userService.findByUserId(cudVO.getUsername());
+        User user = userService.findById(cudVO.getUsername());
         Review review = reviewRepository.findById(request.getId()).orElseThrow(NotExistCommentException::new);
 
         // 본인이 아닌 경우 글을 수정할 수 없음
@@ -61,7 +61,7 @@ public class ReviewService {
 
     @Transactional
     public CommonResponse delete(CustomUserDetailsVO cudVO, Long commentId) {
-        User user = userService.findByUserId(cudVO.getUsername());
+        User user = userService.findById(cudVO.getUsername());
         Review review = reviewRepository.findById(commentId).orElseThrow(NotExistCommentException::new);
 
         // 본인이 아닌 경우 글을 삭제할 수 없음

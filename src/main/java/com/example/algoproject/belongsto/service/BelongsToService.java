@@ -34,7 +34,12 @@ public class BelongsToService {
     }
 
     @Transactional
-    public void deleteByStudy(Study study) {
-        belongsToRepository.deleteAll(findByStudy(study));
+    public void deleteByStudyAndMember(Study study, User user) {
+        belongsToRepository.deleteByStudyAndMember(study, user);
+    }
+
+    @Transactional
+    public void deleteAllByStudy(Study study) {
+        belongsToRepository.deleteAllByStudy(study);
     }
 }

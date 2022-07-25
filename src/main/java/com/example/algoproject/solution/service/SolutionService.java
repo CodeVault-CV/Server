@@ -2,8 +2,8 @@ package com.example.algoproject.solution.service;
 
 import com.example.algoproject.belongsto.domain.BelongsTo;
 import com.example.algoproject.belongsto.service.BelongsToService;
-import com.example.algoproject.errors.exception.NotExistSolutionException;
-import com.example.algoproject.errors.exception.NotMySolutionException;
+import com.example.algoproject.errors.exception.notfound.NotExistSolutionException;
+import com.example.algoproject.errors.exception.badrequest.NotMySolutionException;
 import com.example.algoproject.errors.response.CommonResponse;
 import com.example.algoproject.errors.response.ResponseService;
 import com.example.algoproject.problem.domain.Problem;
@@ -17,7 +17,6 @@ import com.example.algoproject.solution.dto.response.SolutionInfo;
 import com.example.algoproject.solution.dto.response.SolutionListInfo;
 import com.example.algoproject.solution.repository.SolutionRepository;
 import com.example.algoproject.study.domain.Study;
-import com.example.algoproject.study.repository.StudyRepository;
 import com.example.algoproject.study.service.StudyService;
 import com.example.algoproject.user.domain.User;
 import com.example.algoproject.user.dto.CustomUserDetailsVO;
@@ -58,9 +57,9 @@ public class SolutionService {
 
     public CommonResponse create(CustomUserDetailsVO cudVO, AddSolution addSolution, MultipartFile code) throws IOException {
 
-        User user = userService.findByUserId(cudVO.getUsername());
+        User user = userService.findById(cudVO.getUsername());
         Problem problem = problemService.findById(addSolution.getProblemId());
-        Study study = studyService.findByStudyId(problem.getSession().getStudy().getStudyId());
+        Study study = studyService.findById(problem.getSession().getStudy().getId());
 
         String gitHubPath = pathUtil.makeGitHubPath(problem, user.getName());
         String s3Path = pathUtil.makeS3Path(study.getRepositoryName(), problem, user.getName());
@@ -106,7 +105,7 @@ public class SolutionService {
     public CommonResponse list(CustomUserDetailsVO cudVO, Long problemId) {
 
         Problem problem = problemService.findById(problemId);
-        Study study = studyService.findByStudyId(problem.getSession().getStudy().getStudyId());
+        Study study = studyService.findById(problem.getSession().getStudy().getId());
         List<BelongsTo> belongs =  belongsToService.findByStudy(study);
         List<Solution> solutions = solutionRepository.findByProblem(problem); // null일 수도 있음
         List<SolutionListInfo> list = new ArrayList<>();
@@ -128,10 +127,10 @@ public class SolutionService {
 
     public CommonResponse update(CustomUserDetailsVO cudVO, Long solutionId, UpdateSolution updateSolution, MultipartFile code) throws IOException {
 
-        User user = userService.findByUserId(cudVO.getUsername());
+        User user = userService.findById(cudVO.getUsername());
         Solution solution = solutionRepository.findById(solutionId).orElseThrow(NotExistSolutionException::new);
         Problem problem = problemService.findById(updateSolution.getProblemId());
-        Study study = studyService.findByStudyId(problem.getSession().getStudy().getStudyId());
+        Study study = studyService.findById(problem.getSession().getStudy().getId());
 
         String gitHubPath = pathUtil.makeGitHubPath(solution.getProblem(), user.getName());
         String s3Path = pathUtil.makeS3Path(study.getRepositoryName(), problem, user.getName());
@@ -165,7 +164,7 @@ public class SolutionService {
 
         Solution solution = solutionRepository.findById(solutionId).orElseThrow(NotExistSolutionException::new);
 
-        if (!cudVO.getUsername().equals(solution.getUser().getUserId())) // 내 솔루션 아니면 삭제 불가
+        if (!cudVO.getUsername().equals(solution.getUser().getId())) // 내 솔루션 아니면 삭제 불가
             throw new NotMySolutionException();
 
         solutionRepository.delete(solution); // 솔루션 삭제

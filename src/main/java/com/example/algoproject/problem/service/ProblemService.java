@@ -1,12 +1,10 @@
 package com.example.algoproject.problem.service;
 
-import com.example.algoproject.errors.exception.NotExistProblemException;
+import com.example.algoproject.errors.exception.notfound.NotExistProblemException;
 import com.example.algoproject.errors.response.CommonResponse;
 import com.example.algoproject.errors.response.ResponseService;
-import com.example.algoproject.problem.domain.Platform;
 import com.example.algoproject.problem.domain.Problem;
 import com.example.algoproject.problem.dto.request.AddProblem;
-import com.example.algoproject.problem.dto.request.ProblemWeekList;
 import com.example.algoproject.problem.dto.response.ProblemInfo;
 import com.example.algoproject.problem.repository.ProblemRepository;
 import com.example.algoproject.session.domain.Session;

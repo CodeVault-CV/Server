@@ -9,6 +9,7 @@ import java.util.List;
 
 public interface BelongsToRepository extends JpaRepository<BelongsTo, Long> {
     List<BelongsTo> findByStudy(Study study);
-
     List<BelongsTo> findByMember(User user);
+    void deleteByStudyAndMember(Study study, User user);
+    void deleteAllByStudy(Study study);
 }

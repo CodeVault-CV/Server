@@ -1,7 +1,7 @@
 package com.example.algoproject.user.service;
 
-import com.example.algoproject.errors.exception.FailedResponseException;
-import com.example.algoproject.errors.exception.NotExistUserException;
+import com.example.algoproject.errors.exception.unauthorized.FailedResponseException;
+import com.example.algoproject.errors.exception.notfound.NotExistUserException;
 import com.example.algoproject.errors.response.CommonResponse;
 import com.example.algoproject.errors.response.ResponseService;
 import com.example.algoproject.user.domain.User;
@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -63,13 +64,18 @@ public class UserService {
     }
 
     @Transactional
-    public User findByUserId(String id) {
+    public User findById(String id) {
         return userRepository.findById(id).orElseThrow(NotExistUserException::new);
     }
 
     @Transactional
     public User findByName(String name) {
         return userRepository.findByName(name).orElseThrow(NotExistUserException::new);
+    }
+
+    @Transactional
+    public List<User> findByNameContains(String name) {
+        return userRepository.findByNameContains(name);
     }
 
     //

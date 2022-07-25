@@ -1,6 +1,6 @@
 package com.example.algoproject.session.service;
 
-import com.example.algoproject.errors.exception.NotExistSessionException;
+import com.example.algoproject.errors.exception.notfound.NotExistSessionException;
 import com.example.algoproject.errors.response.CommonResponse;
 import com.example.algoproject.errors.response.ResponseService;
 import com.example.algoproject.session.domain.Session;
@@ -25,14 +25,14 @@ public class SessionService {
     public CommonResponse create(CreateSession request) {
         Session session = new Session(request);
         sessionRepository.save(session);
-        studyService.getStudy(request.getStudyId()).addSession(session);
+        studyService.findById(request.getStudyId()).addSession(session);
         return responseService.getSuccessResponse();
     }
 
     @Transactional
     public CommonResponse list(String studyId) {
         return responseService.getListResponse(
-                sessionRepository.findByStudy(studyService.getStudy(studyId)));
+                sessionRepository.findByStudy(studyService.findById(studyId)));
     }
 
     @Transactional

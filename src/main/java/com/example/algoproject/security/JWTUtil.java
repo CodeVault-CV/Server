@@ -1,6 +1,6 @@
 package com.example.algoproject.security;
 
-import com.example.algoproject.errors.exception.NotValidateJWTException;
+import com.example.algoproject.errors.exception.unauthorized.NotValidateJWTException;
 import io.jsonwebtoken.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
