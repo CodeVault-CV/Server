@@ -2,9 +2,9 @@ package com.example.algoproject.solution.service;
 
 import com.example.algoproject.belongsto.domain.BelongsTo;
 import com.example.algoproject.belongsto.service.BelongsToService;
+import com.example.algoproject.errors.exception.notfound.NotExistSolutionException;
+import com.example.algoproject.errors.exception.badrequest.NotMySolutionException;
 import com.example.algoproject.errors.exception.AlreadyExistSolutionException;
-import com.example.algoproject.errors.exception.NotExistSolutionException;
-import com.example.algoproject.errors.exception.NotMySolutionException;
 import com.example.algoproject.errors.response.CommonResponse;
 import com.example.algoproject.errors.response.ResponseService;
 import com.example.algoproject.problem.domain.Problem;
@@ -51,10 +51,12 @@ public class SolutionService {
 
     public CommonResponse create(CustomUserDetailsVO cudVO, AddSolution addSolution) throws IOException {
 
-        User user = userService.findByUserId(cudVO.getUsername());
+        User user = userService.findById(cudVO.getUsername());
         Problem problem = problemService.findById(addSolution.getProblemId());
-        Study study = studyService.findByStudyId(problem.getSession().getStudy().getStudyId());
+
+        Study study = studyService.findById(problem.getSession().getStudy().getId());
         Optional<Solution> alreadyExist = solutionRepository.findByProblemAndUser(problem, user);
+
 
         if (alreadyExist.isPresent()) // 이미 현재유저가 해당 문제에 솔루션 등록한 경우
             throw new AlreadyExistSolutionException();
@@ -87,7 +89,7 @@ public class SolutionService {
     public CommonResponse list(CustomUserDetailsVO cudVO, Long problemId) {
 
         Problem problem = problemService.findById(problemId);
-        Study study = studyService.findByStudyId(problem.getSession().getStudy().getStudyId());
+        Study study = studyService.findById(problem.getSession().getStudy().getId());
         List<BelongsTo> belongs =  belongsToService.findByStudy(study);
         List<Solution> solutions = solutionRepository.findByProblem(problem); // null일 수도 있음
         List<SolutionListInfo> list = new ArrayList<>();
@@ -109,10 +111,10 @@ public class SolutionService {
 
     public CommonResponse update(CustomUserDetailsVO cudVO, Long solutionId, UpdateSolution updateSolution) throws IOException {
 
-        User user = userService.findByUserId(cudVO.getUsername());
+        User user = userService.findById(cudVO.getUsername());
         Solution solution = solutionRepository.findById(solutionId).orElseThrow(NotExistSolutionException::new);
         Problem problem = problemService.findById(updateSolution.getProblemId());
-        Study study = studyService.findByStudyId(problem.getSession().getStudy().getStudyId());
+        Study study = studyService.findById(problem.getSession().getStudy().getId());
 
         String gitHubPath = pathUtil.makeGitHubPath(solution.getProblem(), user.getName());
 

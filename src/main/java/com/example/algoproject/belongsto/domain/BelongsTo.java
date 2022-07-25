@@ -16,9 +16,6 @@ public class BelongsTo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // 컨트리뷰터 초대의 수락 여부
-    private boolean accepted;
-
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User member;
@@ -27,13 +24,8 @@ public class BelongsTo {
     @JoinColumn(name = "study_id")
     private Study study;
 
-    public BelongsTo(User leader, Study study, boolean accepted) {
-        this.member = leader;
+    public BelongsTo(User member, Study study) {
+        this.member = member;
         this.study = study;
-        this.accepted = accepted;
-    }
-
-    public void acceptInvitation() {
-        this.accepted = true;
     }
 }

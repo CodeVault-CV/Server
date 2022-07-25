@@ -15,7 +15,7 @@ public class Study {
 
     @Id
     @Column(name = "study_id")
-    private String studyId;
+    private String id;
 
     private String name;
 
@@ -32,8 +32,8 @@ public class Study {
     )
     private List<Session> sessions = new ArrayList<>();
 
-    public Study(String studyId, String name, String leaderId, String repositoryName, String repositoryUrl) {
-        this.studyId = studyId;
+    public Study(String id, String name, String leaderId, String repositoryName, String repositoryUrl) {
+        this.id = id;
         this.name = name;
         this.leaderId = leaderId;
         this.repositoryName = repositoryName;
@@ -45,5 +45,13 @@ public class Study {
 
         if(session.getStudy() != this)
             session.setStudy(this);
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setRepositoryName(String repositoryName) {
+        this.repositoryName = repositoryName;
     }
 }

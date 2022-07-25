@@ -15,6 +15,7 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -31,13 +32,14 @@ public class SecurityConfig {
     @Order(0)
     public SecurityFilterChain resources(HttpSecurity http) throws Exception {
         http
-            .requestMatchers((matchers) -> matchers.requestMatchers(PathRequest.toStaticResources().atCommonLocations())) // Static 파일 (html,js,favicon)에 대해서 filter를 적용시키지 않기 위한 것
-            .requestMatchers((matchers) -> matchers.antMatchers("/configuration/ui", "/api/problem/platform",
-                        "/configuration/security", "/webjars/**", "/", "/csrf", "/error", "/api/user/login", "/v3/api-docs/**", "/configuration/**", "/swagger*/**", "/webjars/**")) // 필터를 적용시키고 싶지 않은 URL
-            .authorizeHttpRequests((authorize) -> authorize.anyRequest().permitAll())
-            .requestCache().disable()
-            .securityContext().disable()
-            .sessionManagement().disable();
+                .requestMatchers((matchers) -> matchers.requestMatchers(PathRequest.toStaticResources().atCommonLocations())) // Static 파일 (html,js,favicon)에 대해서 filter를 적용시키지 않기 위한 것
+                .requestMatchers((matchers) -> matchers.antMatchers("/configuration/ui", "/api/problem/platform",
+                        "/configuration/security", "/webjars/**", "/", "/csrf", "/error", "/api/user/login", "/v3/api-docs/**", "/configuration/**", "/swagger*/**", "/webjars/**", "/api/study/webhook")) // 필터를 적용시키고 싶지 않은 URL
+                .authorizeHttpRequests((authorize) -> authorize.anyRequest().permitAll())
+                .requestCache().disable()
+                .securityContext().disable()
+                .sessionManagement().disable()
+                .csrf().ignoringAntMatchers("/api/study/webhook");
 
         return http.build();
     }
@@ -50,6 +52,7 @@ public class SecurityConfig {
             .and()
             .authorizeRequests()
             .antMatchers("/api/user/login").permitAll()
+            .antMatchers("/api/study/webhook").permitAll()
             .antMatchers("/api/problem/platform").permitAll()
             .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
             .and()

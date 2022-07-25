@@ -14,6 +14,7 @@ public class SwaggerConfig {
         return GroupedOpenApi.builder()
                 .group("Algong")
                 .pathsToMatch("/api/**")
+                .pathsToExclude("/api/study/webhook")
                 .build();
     }
 

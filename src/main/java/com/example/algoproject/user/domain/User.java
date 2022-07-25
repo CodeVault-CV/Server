@@ -21,11 +21,14 @@ public class User {
 
     private String imageUrl;
 
+    private String githubUrl;
+
     public User(String id, String name, String accessToken, String imageUrl) {
         this.id = id;
         this.name = name;
         this.accessToken = accessToken;
         this.imageUrl = imageUrl;
+        this.githubUrl = "https://github.com/" + name;
     }
 
     public void update(String accessToken, String name, String imageUrl) {

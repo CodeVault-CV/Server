@@ -1,23 +1,30 @@
 package com.example.algoproject.study.service;
 
 import com.example.algoproject.belongsto.service.BelongsToService;
-import com.example.algoproject.errors.exception.AlreadyExistMemberException;
-import com.example.algoproject.errors.exception.FailedResponseException;
-import com.example.algoproject.errors.exception.NotExistStudyException;
 import com.example.algoproject.belongsto.domain.BelongsTo;
-import com.example.algoproject.errors.exception.NotLeaderUserException;
+import com.example.algoproject.errors.exception.badrequest.AlreadyExistMemberException;
+import com.example.algoproject.errors.exception.badrequest.AlreadyExistRepositoryNameException;
+import com.example.algoproject.errors.exception.badrequest.SameNameException;
+import com.example.algoproject.errors.exception.badrequest.SameUserException;
+import com.example.algoproject.errors.exception.forbidden.NotLeaderUserException;
+import com.example.algoproject.errors.exception.forbidden.StudyAuthException;
+import com.example.algoproject.errors.exception.notfound.NotExistMemberException;
+import com.example.algoproject.errors.exception.notfound.NotExistRepositoryException;
+import com.example.algoproject.errors.exception.notfound.NotExistStudyException;
 import com.example.algoproject.errors.response.CommonResponse;
 import com.example.algoproject.errors.response.ResponseService;
 import com.example.algoproject.study.domain.Study;
 import com.example.algoproject.study.dto.request.*;
-import com.example.algoproject.study.dto.response.MemberInfo;
 import com.example.algoproject.study.dto.response.StudyInfo;
+import com.example.algoproject.study.dto.response.StudyListInfo;
 import com.example.algoproject.study.repository.StudyRepository;
 import com.example.algoproject.user.domain.User;
 import com.example.algoproject.user.dto.CustomUserDetailsVO;
+import com.example.algoproject.user.dto.UserInfo;
 import com.example.algoproject.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -34,6 +41,9 @@ import java.util.Objects;
 @Service
 public class StudyService {
 
+    @Value("${baseUrl}")
+    private String url;
+
     private final StudyRepository studyRepository;
     private final UserService userService;
     private final BelongsToService belongsToService;
@@ -42,9 +52,7 @@ public class StudyService {
     @Transactional
     public CommonResponse create(CustomUserDetailsVO cudVO, CreateStudy request) {
 
-        // 이름 중복 검사 예외처리 추가해야함
-
-        User leader = userService.findByUserId(cudVO.getUsername());
+        User leader = userService.findById(cudVO.getUsername());
         log.info("study name: " + request.getStudyName());
         log.info("repository name: " + request.getRepoName());
         log.info("leader name: " + leader.getName());
@@ -52,126 +60,184 @@ public class StudyService {
         // 팀장의 github 이름으로 repoName 이 이름인 레포지토리 생성
         Map<String, Object> response = createRepositoryResponse(leader, request.getRepoName());
 
-        Study study = new Study(response.get("id").toString(), request.getStudyName(), cudVO.getUsername(), response.get("name").toString(), response.get("html_url").toString());
+        // 스터디에 해당하는 Repository 의 webhook 생성
+        createWebhookResponse(leader, request.getRepoName());
 
-        studyRepository.save(study);
+        Study study = new Study(response.get("id").toString(), request.getStudyName(), cudVO.getUsername(), response.get("name").toString(), response.get("html_url").toString());
+        save(study);
 
         // 스터디 생성시 팀장을 스터디 멤버에 추가
-        belongsToService.save(new BelongsTo(leader, study, true));
+        belongsToService.save(new BelongsTo(leader, study));
 
         return responseService.getSingleResponse(response.get("id").toString());
     }
 
     @Transactional
-    public CommonResponse addMember(CustomUserDetailsVO cudVO, AddMember request) {
+    public CommonResponse update(CustomUserDetailsVO cudVO, UpdateStudy request) {
 
-        User leader = userService.findByUserId(cudVO.getUsername());
-        log.info("leader name: " + leader.getName());
+        Study study = findById(request.getId());
 
-        User member = userService.findByName(request.getMemberName());
-        log.info("member name: " + member.getName());
+        // 리더 유저인지 확인
+        checkLeader(userService.findById(cudVO.getUsername()), study);
 
-        Study study = studyRepository.findByStudyId(request.getStudyId()).orElseThrow(NotExistStudyException::new);
-        log.info("study name: " + study.getName());
+        // 스터디의 이름이 이전과 같음
+        if (study.getName().equals(request.getName()))
+            throw new SameNameException();
 
-        // 이미 존재 중인 멤버 인지 확인 하는 것 추가
-        List<BelongsTo> members = belongsToService.findByStudy(study);
-        for (BelongsTo belongsTo : members)
-            if (belongsTo.getMember().getId().equals(member.getId()))
-                throw new AlreadyExistMemberException();
-
-        // leader 가 github 에서 member 에게 study 레포지토리로 contributor 초대를 보냄
-        addContributorResponse(leader, member, study);
-
-        // Study 와 Member 간의 관계 저장
-        belongsToService.save(new BelongsTo(member, study, false));
+        // 스터디의 이름을 변경
+        study.setName(request.getName());
+        save(study);
 
         return responseService.getSuccessResponse();
     }
 
     @Transactional
-    public CommonResponse getMembers(String studyId) {
+    public CommonResponse detail(CustomUserDetailsVO cudVO, String id) {
 
-        Study study = getStudy(studyId);
-        log.info("study name: " + study.getName());
+        User user = userService.findById(cudVO.getUsername());
+        Study study = findById(id);
+        List<User> members = getMembers(study);
 
-        User owner = userService.findByUserId(study.getLeaderId());
-        log.info("owner name: " + owner.getName());
+        // 해당 스터디에 속한 사람인지 확인
+        checkAuth(user, study);
 
-        // 스터디에 있는 사람들 중 아직 초대 받지 않은 사람이 있으면 github 에서 다시 갱신해옴
-        // 만약 다 초대를 받았다면 github 에서 갱신해오지 않는다
-        List<BelongsTo> belongs = belongsToService.findByStudy(study);
-
-        if (!isAllAccepted(belongs))
-            updateMemberList(owner, study, belongs);
-
-        return responseService.getListResponse(getMemberList(belongs));
-    }
-
-    @Transactional
-    public CommonResponse detail(String studyId) {
-
-        Study study = getStudy(studyId);
-        User leader = userService.findByUserId(study.getLeaderId());
-
-        if (synchronizeRepository(leader, study))
-            return responseService.getErrorResponse(HttpStatus.BAD_REQUEST.value(), "존재하지 않는 스터디 입니다.");
-
-        List<BelongsTo> belongs = belongsToService.findByStudy(study);
-
-        List<MemberInfo> members = getMemberList(belongs);
-
-        return responseService.getSingleResponse(new StudyInfo(study.getName(), study.getRepositoryUrl(), members));
+        return responseService.getSingleResponse(new StudyInfo(study, getMemberInfos(members)));
     }
 
     @Transactional
     public CommonResponse list(CustomUserDetailsVO cudVO) {
-
-        User user = userService.findByUserId(cudVO.getUsername());
-        List<BelongsTo> belongs = belongsToService.findByMember(user);
-        List<String> list = new ArrayList<>();
-
-        for (Study study : getStudyList(belongs))
-            list.add(study.getStudyId());
-
-        for (String studyId : list) {
-            Study study = getStudy(studyId);
-            User leader = userService.findByUserId(study.getLeaderId());
-
-            // Github에 Repository가 존재하지 않으면 Database에서 삭제후 존재하지 않는 스터디 리스트에서 제외
-            synchronizeRepository(leader, study);
-        }
-
-        return responseService.getListResponse(getStudyList(belongsToService.findByMember(user)));
+        return responseService.getListResponse(getStudyInfos(userService.findById(cudVO.getUsername())));
     }
 
     @Transactional
-    public CommonResponse delete(CustomUserDetailsVO cudVO, String studyId) {
+    public CommonResponse delete(CustomUserDetailsVO cudVO, String id) {
 
-        Study study = getStudy(studyId);
-        User leader = userService.findByUserId(study.getLeaderId());
+        User user = userService.findById(cudVO.getUsername());
+        Study study = findById(id);
 
-        // Github에 Repository가 존재하지 않으면 Database에서 삭제후 존재하지 않는 스터디 예외
-        if (synchronizeRepository(leader, study))
-            return responseService.getErrorResponse(HttpStatus.BAD_REQUEST.value(), "존재하지 않는 스터디 입니다.");
+        // 리더 유저인지 확인
+        checkLeader(user, study);
 
-        // 스터디의 리더만 스터디를 삭제할 수 있음
-        if (!cudVO.getUsername().equals(study.getLeaderId()))
-            throw new NotLeaderUserException();
+        // github API 로 저장소 삭제 요청
+        deleteRepositoryResponse(user, study);
 
-        // Github에 있는 레포지토리 삭제
-        deleteRepositoryResponse(leader, study);
-
-        // 먼저 Study에 연관된 BelongsTo들을 삭제 후 스터디 삭제
-        belongsToService.deleteByStudy(study);
+        // 데이터베이스에서 스터디와 연관된 belongto들을 삭제
+        belongsToService.deleteAllByStudy(study);
         studyRepository.delete(study);
 
         return responseService.getSuccessResponse();
     }
 
     @Transactional
-    public Study getStudy(String studyId) {
-        return studyRepository.findByStudyId(studyId).orElseThrow(NotExistStudyException::new);
+    public CommonResponse addMember(CustomUserDetailsVO cudVO, Member request) {
+
+        User leader = userService.findById(cudVO.getUsername());
+        User member = userService.findByName(request.getMember());
+        Study study = findById(request.getStudyId());
+
+        log.info("leader name: " + leader.getName());
+        log.info("member name: " + member.getName());
+        log.info("study name: " + study.getName());
+
+        // 리더 유저인지 확인
+        checkLeader(leader, study);
+
+        // 자기 자신을 초대할 수 없음
+        checkSame(leader, member);
+
+        // 추가할 멤버가 이미 스터디에 있지않은지 확인
+        try {
+            checkMember(member, study);
+            // NotMemberUser 에외가 발생하지 않으면 이미 존재하는 멤버로 예외처리
+            throw new AlreadyExistMemberException();
+        } catch (NotExistMemberException ex) {
+            // leader 가 github 에서 member 에게 study 레포지토리로 contributor 초대를 보냄
+            addContributorResponse(leader, member, study);
+        }
+        return responseService.getSuccessResponse();
+    }
+
+    @Transactional
+    public CommonResponse deleteMember(CustomUserDetailsVO cudVO, Member request) {
+
+        User leader = userService.findById(cudVO.getUsername());
+        User member = userService.findByName(request.getMember());
+        Study study = findById(request.getStudyId());
+
+        log.info("leader name: " + leader.getName());
+        log.info("member name: " + member.getName());
+        log.info("study name: " + study.getName());
+
+        // 요청한 유저가 리더인지 확인
+        checkLeader(leader, study);
+
+        // 자기 자신을 삭제할 수 없음
+        checkSame(leader, member);
+
+        // 삭제할 멤버가 스터디에 속해있는지 확인
+        checkMember(member, study);
+
+        // leader 가 github 에서 member 에게 study 레포지토리로 contributor 초대를 보냄
+        removeContributorResponse(leader, member, study);
+
+        return responseService.getSuccessResponse();
+    }
+
+    @Transactional
+    public CommonResponse searchMember(CustomUserDetailsVO cudVO, SearchUser request) {
+
+        log.info("search user name: {}", request.getName());
+
+        User leader = userService.findById(cudVO.getUsername());
+        Study study = findById(request.getId());
+
+        // 요청한 유저가 리더인지 확인
+        checkLeader(leader, study);
+
+        return responseService.getListResponse(findUserByNameContains(request.getName(), study));
+    }
+
+    @Transactional
+    public void webhook(Map<String, Object> response) {
+
+        // Webhook 이 왔을 때 경우(contributor, repository)를 분리하여 method 실행
+        Map<String, Object> repoMap = (Map<String, Object>) response.get("repository");
+        Study study = findById(repoMap.get("id").toString());
+
+        // contributor
+        if (response.containsKey("member")) {
+            Map<String, Object> memberMap = (Map<String, Object>) response.get("member");
+            User member = userService.findById(memberMap.get("id").toString());
+
+            // contributor 추가됐을 때에 데이터베이스에 추가
+            if (response.get("action").equals("added")) {
+                log.info("member: {} added to study: {}", member.getName(), study.getName());
+                belongsToService.save(new BelongsTo(member, study));
+            }
+
+            // contributor 삭제됐을 때에 데이터베이스에서 삭제
+            else {
+                log.info("member: {} removed to study: {}", member.getName(), study.getName());
+                belongsToService.deleteByStudyAndMember(study, member);
+            }
+        }
+
+        // repository
+        else {
+            // 스터디 레포지토리의 이름 변경 됐을 때에 데이터베이스의 레포이름 변경
+            if (response.get("action").equals("renamed")) {
+                log.info("study: {}'s repository renamed to {}", study.getName(), repoMap.get("name").toString());
+                study.setRepositoryName(repoMap.get("name").toString());
+                save(study);
+            }
+
+            // 스터디 레포지토리의 삭제됐을 때에 데이터베이스의 스터디 삭제
+            else {
+                log.info("study: {}'s repository is deleted...Delete study at database, too", study.getName());
+                belongsToService.deleteAllByStudy(study);
+                studyRepository.delete(study);
+            }
+        }
     }
 
     @Transactional
@@ -180,65 +246,91 @@ public class StudyService {
     }
 
     @Transactional
-    public Study findByStudyId(String studyId) {
-        return studyRepository.findByStudyId(studyId).orElseThrow(NotExistStudyException::new);
+    public Study findById(String id) {
+        return studyRepository.findById(id).orElseThrow(NotExistStudyException::new);
+    }
+
+    public void checkLeader(User user, Study study) {
+        if(!Objects.equals(user.getId(), study.getLeaderId()))
+            throw new NotLeaderUserException();
+    }
+
+    public void checkAuth(User user, Study study) {
+        if (!getMembers(study).contains(user))
+            throw new StudyAuthException();
+    }
+
+    public void checkSame(User leader, User member) {
+        if (leader.equals(member))
+            throw new SameUserException();
+    }
+
+    public void checkMember(User user, Study study) {
+        if (!getMembers(study).contains(user))
+            throw new NotExistMemberException();
     }
 
     //
     // private methods
     //
 
-    private Map<String, Object> createRepositoryResponse(User owner, String repoName) {
+    private Map<String, Object> createRepositoryResponse(User leader, String repoName) {
 
-        HttpHeaders headers = makeHeader(owner);
-
+        HttpHeaders headers = makeHeader(leader);
         CreateRepository request = new CreateRepository();
         request.setName(repoName);
         request.setAuto_init(true);
-
         HttpEntity<CreateRepository> entity = new HttpEntity<>(request, headers);
-
         RestTemplate restTemplate = new RestTemplate();
 
-        ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
-                "https://api.github.com/user/repos",
+        try {
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                    "https://api.github.com/user/repos",
+                    HttpMethod.POST,
+                    entity,
+                    new ParameterizedTypeReference<>() {
+                    });
+            return response.getBody();
+        } catch (RuntimeException ex) {
+            throw new AlreadyExistRepositoryNameException();
+        }
+    }
+
+    private void deleteRepositoryResponse(User leader, Study study) {
+
+        HttpHeaders headers = makeHeader(leader);
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+        RestTemplate restTemplate = new RestTemplate();
+
+        try {
+            restTemplate.exchange(
+                    "https://api.github.com/repos/" + leader.getName() + "/" + study.getRepositoryName(),
+                    HttpMethod.DELETE,
+                    entity,
+                    new ParameterizedTypeReference<>() {
+                    });
+        } catch (RuntimeException ex) {
+            throw new NotExistRepositoryException();
+        }
+    }
+
+    private void createWebhookResponse(User leader, String repoName) {
+        HttpHeaders headers = makeHeader(leader);
+        CreateWebhook request = new CreateWebhook();
+        request.getConfig().setUrl(this.url);
+        HttpEntity<CreateWebhook> entity = new HttpEntity<>(request, headers);
+        RestTemplate restTemplate = new RestTemplate();
+        restTemplate.exchange(
+                "https://api.github.com/repos/" + leader.getName() + "/" + repoName + "/hooks",
                 HttpMethod.POST,
                 entity,
                 new ParameterizedTypeReference<>() {
                 });
-
-        // request 가 정상적으로 수행되지 않았을 때
-        if(!response.getStatusCode().is2xxSuccessful())
-            throw new FailedResponseException("github api에서 repository 생성을 실패했습니다.");
-
-        return response.getBody();
     }
 
-    private void deleteRepositoryResponse(User owner, Study study) {
+    private void addContributorResponse(User leader, User member, Study study) {
 
-        HttpHeaders headers = makeHeader(owner);
-
-        HttpEntity<String> entity = new HttpEntity<>(headers);
-
-        RestTemplate restTemplate = new RestTemplate();
-
-        ResponseEntity<List<Map<String, Object>>> response = restTemplate.exchange(
-                "https://api.github.com/repos/" + owner.getName() + "/" + study.getRepositoryName(),
-                HttpMethod.DELETE,
-                entity,
-                new ParameterizedTypeReference<>() {
-                });
-
-        // request 가 정상적으로 수행되지 않았을 때
-        if (!response.getStatusCode().is2xxSuccessful())
-            throw new FailedResponseException("github api에서 repository 삭제를 실패했습니다.");
-
-        log.info("repository " + study.getRepositoryName() + " deleted on github");
-    }
-
-    private void addContributorResponse(User owner, User member, Study study) {
-
-        HttpHeaders headers = makeHeader(owner);
+        HttpHeaders headers = makeHeader(leader);
 
         AddContributor request = new AddContributor();
         request.setPermission("admin");
@@ -248,66 +340,27 @@ public class StudyService {
         RestTemplate restTemplate = new RestTemplate();
 
         ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
-                "https://api.github.com/repos/" + owner.getName() + "/" + study.getRepositoryName() + "/collaborators/" + member.getName(),
+                "https://api.github.com/repos/" + leader.getName() + "/" + study.getRepositoryName() + "/collaborators/" + member.getName(),
                 HttpMethod.PUT,
                 entity,
                 new ParameterizedTypeReference<>() {
                 });
-
-        // request 가 정상적으로 수행되지 않았을 때
-        if(!response.getStatusCode().is2xxSuccessful())
-            throw new FailedResponseException("github api에서 contributor 초대를 실패했습니다.");
+        if(response.getStatusCodeValue() == 204)
+            throw new AlreadyExistMemberException();
     }
 
-    private List<Map<String, Object>> getContributorsResponse(User owner, Study study) {
+    private void removeContributorResponse(User leader, User member, Study study) {
 
-        HttpHeaders headers = makeHeader(owner);
-
-        HttpEntity<String> entity = new HttpEntity<>(headers);
-
+        HttpHeaders headers = makeHeader(leader);
+        HttpEntity<Object> entity = new HttpEntity<>(headers);
         RestTemplate restTemplate = new RestTemplate();
 
-        ResponseEntity<List<Map<String, Object>>> response = restTemplate.exchange(
-                "https://api.github.com/repos/" + owner.getName() + "/" + study.getRepositoryName() + "/collaborators",
-                HttpMethod.GET,
+        restTemplate.exchange(
+                "https://api.github.com/repos/" + leader.getName() + "/" + study.getRepositoryName() + "/collaborators/" + member.getName(),
+                HttpMethod.DELETE,
                 entity,
                 new ParameterizedTypeReference<>() {
                 });
-
-        // request 가 정상적으로 수행되지 않았을 때
-        if (!response.getStatusCode().is2xxSuccessful())
-            throw new FailedResponseException("github api에서 contributor 조회에 실패했습니다.");
-
-        return response.getBody();
-    }
-
-    private boolean synchronizeRepository(User owner, Study study) {
-
-        HttpHeaders headers = makeHeader(owner);
-
-        HttpEntity<String> entity = new HttpEntity<>(headers);
-
-        RestTemplate restTemplate = new RestTemplate();
-
-        ResponseEntity<List<Map<String, Object>>> response = restTemplate.exchange(
-                "https://api.github.com/users/" + owner.getName() + "/repos",
-                HttpMethod.GET,
-                entity,
-                new ParameterizedTypeReference<>() {
-                });
-
-        if (!response.getStatusCode().is2xxSuccessful())
-            throw new FailedResponseException("github api에서 repository 조회에 실패했습니다.");
-
-        for (Map<String, Object> map : Objects.requireNonNull(response.getBody()))
-            if (map.get("id").toString().equals(study.getStudyId()))
-                return false;
-
-        // 먼저 Study에 연관된 BelongsTo들을 삭제 후 스터디 삭제
-        belongsToService.deleteByStudy(study);
-        studyRepository.delete(study);
-
-        return true;
     }
 
     private HttpHeaders makeHeader(User owner) {
@@ -318,43 +371,42 @@ public class StudyService {
         return headers;
     }
 
-    private boolean isAllAccepted(List<BelongsTo> belongs) {
+    private List<User> getMembers(Study study) {
+        List<User> members = new ArrayList<>();
+        List<BelongsTo> belongs = belongsToService.findByStudy(study);
+
         for (BelongsTo belongsTo : belongs)
-            if(belongsTo.isAccepted())
-                return false;
-        return true;
-    }
-
-    private void updateMemberList(User owner, Study study, List<BelongsTo> belongs) {
-        List<Map<String, Object>> responses = getContributorsResponse(owner, study);
-
-        for (Map<String, Object> response : responses)
-            for (BelongsTo belongsTo : belongs)
-                // github api 를 이용해 조회한 contributor 가 새로 추가된 경우(초대를 받은 경우) 상태를 업데이트 해준다
-                if(response.get("id") == belongsTo.getMember().getId() && !belongsTo.isAccepted()){
-                    belongsTo.acceptInvitation();
-                    belongsToService.save(belongsTo);
-                }
-    }
-
-    private List<MemberInfo> getMemberList(List<BelongsTo> belongs) {
-        List<MemberInfo> members = new ArrayList<>();
-
-        for (BelongsTo belongsTo : belongs){
-            User user = belongsTo.getMember();
-            members.add(new MemberInfo(user.getName(), user.getImageUrl(), belongsTo.isAccepted()));
-        }
+            members.add(belongsTo.getMember());
 
         return members;
     }
 
-    private List<Study> getStudyList(List<BelongsTo> belongs) {
+    private List<UserInfo> getMemberInfos(List<User> users) {
+        List<UserInfo> infos = new ArrayList<>();
+        for (User user : users)
+            infos.add(new UserInfo(user));
+        return infos;
+    }
 
-        List<Study> studyList = new ArrayList<>();
+    private List<StudyListInfo> getStudyInfos(User user) {
+        List<StudyListInfo> infos = new ArrayList<>();
+        List<BelongsTo> belongs = belongsToService.findByMember(user);
 
         for (BelongsTo belongsTo : belongs)
-            studyList.add(belongsTo.getStudy());
+            infos.add(new StudyListInfo(belongsTo.getStudy()));
 
-        return studyList;
+        return infos;
+    }
+
+    private List<UserInfo> findUserByNameContains(String name, Study study) {
+        List<User> users = userService.findByNameContains(name);
+        List<User> members = getMembers(study);
+        List<UserInfo> infos = new ArrayList<>();
+
+        for (User user : users)
+            // 멤버(해당 스터디에 이미 있는 사람)에 속하지 않은 사람으로만 검색
+            if (!members.contains(user))
+                infos.add(new UserInfo(user));
+        return infos;
     }
 }
