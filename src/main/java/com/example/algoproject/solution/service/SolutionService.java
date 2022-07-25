@@ -4,7 +4,7 @@ import com.example.algoproject.belongsto.domain.BelongsTo;
 import com.example.algoproject.belongsto.service.BelongsToService;
 import com.example.algoproject.errors.exception.notfound.NotExistSolutionException;
 import com.example.algoproject.errors.exception.badrequest.NotMySolutionException;
-import com.example.algoproject.errors.exception.AlreadyExistSolutionException;
+import com.example.algoproject.errors.exception.badrequest.AlreadyExistSolutionException;
 import com.example.algoproject.errors.response.CommonResponse;
 import com.example.algoproject.errors.response.ResponseService;
 import com.example.algoproject.problem.domain.Problem;
