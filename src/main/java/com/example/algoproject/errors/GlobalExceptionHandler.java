@@ -1,5 +1,6 @@
 package com.example.algoproject.errors;
 
+import com.example.algoproject.errors.exception.badrequest.AlreadyExistSolutionException;
 import com.example.algoproject.errors.exception.badrequest.*;
 import com.example.algoproject.errors.exception.forbidden.NotLeaderUserException;
 import com.example.algoproject.errors.exception.forbidden.StudyAuthException;
