@@ -4,11 +4,12 @@ import com.example.algoproject.belongsto.domain.BelongsTo;
 import com.example.algoproject.belongsto.service.BelongsToService;
 import com.example.algoproject.errors.exception.notfound.NotExistSolutionException;
 import com.example.algoproject.errors.exception.badrequest.NotMySolutionException;
+import com.example.algoproject.errors.exception.AlreadyExistSolutionException;
 import com.example.algoproject.errors.response.CommonResponse;
 import com.example.algoproject.errors.response.ResponseService;
 import com.example.algoproject.problem.domain.Problem;
 import com.example.algoproject.problem.service.ProblemService;
-import com.example.algoproject.s3.S3Uploader;
+import com.example.algoproject.solution.domain.Language;
 import com.example.algoproject.solution.domain.Solution;
 import com.example.algoproject.solution.dto.request.AddSolution;
 import com.example.algoproject.solution.dto.request.CommitFileRequest;
@@ -22,7 +23,6 @@ import com.example.algoproject.user.domain.User;
 import com.example.algoproject.user.dto.CustomUserDetailsVO;
 import com.example.algoproject.user.service.UserService;
 import com.example.algoproject.util.PathUtil;
-import com.example.algoproject.util.ReadMeUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
@@ -30,14 +30,10 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -51,45 +47,33 @@ public class SolutionService {
     private final BelongsToService belongsToService;
 
     private final ResponseService responseService;
-    private final S3Uploader s3Uploader;
     private final PathUtil pathUtil;
-    private final ReadMeUtil readMeUtil;
 
-    public CommonResponse create(CustomUserDetailsVO cudVO, AddSolution addSolution, MultipartFile code) throws IOException {
+    public CommonResponse create(CustomUserDetailsVO cudVO, AddSolution addSolution) throws IOException {
 
         User user = userService.findById(cudVO.getUsername());
         Problem problem = problemService.findById(addSolution.getProblemId());
+
         Study study = studyService.findById(problem.getSession().getStudy().getId());
+        Optional<Solution> alreadyExist = solutionRepository.findByProblemAndUser(problem, user);
+
+
+        if (alreadyExist.isPresent()) // 이미 현재유저가 해당 문제에 솔루션 등록한 경우
+            throw new AlreadyExistSolutionException();
 
         String gitHubPath = pathUtil.makeGitHubPath(problem, user.getName());
-        String s3Path = pathUtil.makeS3Path(study.getRepositoryName(), problem, user.getName());
-
         log.info("github repository path : " + gitHubPath);
-        log.info("s3 repository path : " + s3Path);
 
-        long date = System.currentTimeMillis();
-        int i = code.getOriginalFilename().lastIndexOf("."); // 코드파일 확장자 분리
-        String language = "";
-        if (i > 0) {
-            language = code.getOriginalFilename().substring(i + 1);
-        }
-
-        /* readme file 생성 메소드 */
-        MultipartFile readMe = readMeUtil.makeReadMe(addSolution.getHeader(), addSolution.getContent());
+        long date = System.currentTimeMillis(); // 솔루션 등록한 시간 기록
+        String commitMessage = pathUtil.makeCommitMessage(problem, user.getName()); // 커밋메세지 만듦
+        String fileName = problem.getNumber() + "." + addSolution.getLanguage(); // ***이거 프론트에서 언어 어케 주는지에 따라 매핑 해줘야될듯....
 
         /* github에 file commit */
-        checkFileResponse(code, user, gitHubPath, study.getRepositoryName(), problem.getPlatform() + " [" + problem.getNumber() + "]" + problem.getName() + " By " + user.getName());
-        checkFileResponse(readMe, user, gitHubPath, study.getRepositoryName(), problem.getPlatform() + " [" + problem.getNumber() + "]" + problem.getName() + " By " + user.getName());
-
-        /* s3에 file upload */
-        String codeUrl = s3Uploader.upload(code, s3Path);
-        String readMeUrl = s3Uploader.upload(readMe, s3Path);
-
-        /* local 리드미 삭제 */
-        readMeUtil.removeReadMe(readMe);
+        checkFileResponse(user, addSolution.getCode(), fileName, commitMessage, gitHubPath, study.getRepositoryName()); // code
+        checkFileResponse(user, addSolution.getReadMe(), "README.md", commitMessage, gitHubPath, study.getRepositoryName()); // readMe
 
         /* DB에 저장 */
-        solutionRepository.save(new Solution(user, problem, codeUrl, readMeUrl, new Timestamp(date), addSolution.getTime(), addSolution.getMemory(), language));
+        solutionRepository.save(new Solution(user, problem, addSolution.getCode(), addSolution.getReadMe(), new Timestamp(date), addSolution.getLanguage()));
 
         return responseService.getSuccessResponse();
     }
@@ -98,7 +82,7 @@ public class SolutionService {
 
         Solution solution = solutionRepository.findById(solutionId).orElseThrow(NotExistSolutionException::new);
 
-        return responseService.getSingleResponse(new SolutionInfo(solution.getId(), solution.getCodeUrl(), solution.getReadMeUrl(), solution.getDate(), solution.getTime(), solution.getMemory(), solution.getReviews()));
+        return responseService.getSingleResponse(new SolutionInfo(solution.getCode(), solution.getReadMe(), solution.getDate(), solution.getReviews()));
 
     }
 
@@ -111,11 +95,11 @@ public class SolutionService {
         List<SolutionListInfo> list = new ArrayList<>();
 
         for (User member: getMemberList(belongs)) { // 현재 스터디의 팀원들 중에서, probelmId를 푼 팀원은 언어와 풀이여부 true 반환. 안 풀었으면 false 반환.
-            System.out.println(member.getName());
-            SolutionListInfo info = new SolutionListInfo(member.getName(), member.getImageUrl(),false, "none"); // language enum 타입이라 null 안됨.. 일단 nont으로 해둠
+            SolutionListInfo info = new SolutionListInfo(false, null, member.getName(), member.getImageUrl(), "none"); // language enum 타입이라 null 안됨.. 일단 nont으로 해둠
 
             for (Solution solution: solutions) {
                 if (solution.getUser().equals(member)) {
+                    info.setSolutionId(solution.getId());
                     info.setLanguage(solution.getLanguage());
                     info.setSolve(true);
                 }
@@ -125,7 +109,7 @@ public class SolutionService {
         return responseService.getListResponse(list);
     }
 
-    public CommonResponse update(CustomUserDetailsVO cudVO, Long solutionId, UpdateSolution updateSolution, MultipartFile code) throws IOException {
+    public CommonResponse update(CustomUserDetailsVO cudVO, Long solutionId, UpdateSolution updateSolution) throws IOException {
 
         User user = userService.findById(cudVO.getUsername());
         Solution solution = solutionRepository.findById(solutionId).orElseThrow(NotExistSolutionException::new);
@@ -133,28 +117,18 @@ public class SolutionService {
         Study study = studyService.findById(problem.getSession().getStudy().getId());
 
         String gitHubPath = pathUtil.makeGitHubPath(solution.getProblem(), user.getName());
-        String s3Path = pathUtil.makeS3Path(study.getRepositoryName(), problem, user.getName());
 
-        /* readme file 생성 메소드 */
-        MultipartFile readMe = readMeUtil.makeReadMe(updateSolution.getHeader(), updateSolution.getContent());
+        String commitMessage = pathUtil.makeCommitMessage(problem, user.getName()); // 커밋메세지 만듦
+        String fileName = problem.getNumber() + "." + updateSolution.getLanguage(); // ***이거 프론트에서 언어 어케 주는지에 따라 매핑 해줘야될듯....
 
         /* github에 file commit */
-        checkFileResponse(code, user, gitHubPath, study.getRepositoryName(), problem.getPlatform() + " [" + problem.getNumber() + "]" + problem.getName() + " By " + user.getName());
-        checkFileResponse(readMe, user, gitHubPath, study.getRepositoryName(), problem.getPlatform() + " [" + problem.getNumber() + "]" + problem.getName() + " By " + user.getName());
+        checkFileResponse(user, updateSolution.getCode(), fileName, commitMessage, gitHubPath, study.getRepositoryName());
+        checkFileResponse(user, updateSolution.getReadMe(), "README.md", commitMessage, gitHubPath, study.getRepositoryName());
 
-        /* s3에 file upload */
-        String codeUrl = s3Uploader.upload(code, s3Path);
-        String readMeUrl = s3Uploader.upload(readMe, s3Path);
-
-        /* local 리드미 삭제 */
-        readMeUtil.removeReadMe(readMe);
-
-        /* 메모리/시간복잡도, 등록시간 update */
-        solution.setMemory(updateSolution.getMemory());
-        solution.setTime(updateSolution.getTime());
         solution.setDate(new Timestamp(System.currentTimeMillis()));
-        solution.setReadMeUrl(readMeUrl);
-        solution.setCodeUrl(codeUrl);
+        solution.setCode(updateSolution.getCode());
+        solution.setReadMe(updateSolution.getReadMe());
+        solution.setLanguage(Language.valueOf(updateSolution.getLanguage()));
         solutionRepository.save(solution);
 
         return responseService.getSuccessResponse();
@@ -184,7 +158,7 @@ public class SolutionService {
     private method
     */
 
-    private void checkFileResponse(MultipartFile multipartFile, User user, String path, String repoName, String commitMessage) throws IOException {
+    private void checkFileResponse(User user, String content, String fileName, String commitMessage, String path, String repoName) throws IOException {
         HttpHeaders headers = new HttpHeaders();
         headers.add("Accept", "application/vnd.github.v3+json");
         headers.add("User-Agent", "api-test");
@@ -195,20 +169,20 @@ public class SolutionService {
         HttpEntity entity = new HttpEntity<>(headers); // http entity에 header 담아줌
         try { // 깃허브에 파일 존재.
             ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
-                    "https://api.github.com/repos/" + user.getName() + "/" + repoName + "/contents/" + path + multipartFile.getOriginalFilename(),
+                    "https://api.github.com/repos/" + user.getName() + "/" + repoName + "/contents/" + path + fileName,
                     HttpMethod.GET,
                     entity,
                     new ParameterizedTypeReference<>() {
                     });
 
-            commitFileResponse(response.getBody().get("sha").toString(), multipartFile, user, path, repoName, commitMessage);
+            commitFileResponse(response.getBody().get("sha").toString(), user, content, fileName, path, repoName, commitMessage);
         } catch (HttpClientErrorException e) { // 깃허브에 파일 존재 x. 새로 생성되는 파일인 경우 404 에러 뜸.
-            commitFileResponse(null, multipartFile, user, path, repoName, commitMessage);
+            commitFileResponse(null, user, content, fileName, path, repoName, commitMessage);
         }
     }
 
     /* github file commit 메소드 */
-    private Map<String, Object> commitFileResponse(String sha, MultipartFile multipartFile, User user, String path, String repoName, String commitMessage) throws IOException {
+    private Map<String, Object> commitFileResponse(String sha, User user, String content, String fileName, String path, String repoName, String commitMessage) throws IOException {
         HttpHeaders headers = new HttpHeaders();
         headers.add("Accept", "application/vnd.github.v3+json");
         headers.add("User-Agent", "api-test");
@@ -216,7 +190,7 @@ public class SolutionService {
 
         CommitFileRequest request = new CommitFileRequest();
         request.setMessage(commitMessage);
-        request.setContent(Base64.getEncoder().encodeToString(multipartFile.getBytes())); // 내용 base64로 인코딩 해줘야됨 (필수)
+        request.setContent(Base64.getEncoder().encodeToString(content.getBytes())); // 내용 base64로 인코딩 해줘야됨 (필수)
 
         if (sha != null) { // 기존 파일 수정하는 거면 sha 바디에 추가해야됨
             request.setSha(sha);
@@ -227,12 +201,12 @@ public class SolutionService {
         RestTemplate restTemplate = new RestTemplate();
 
         ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
-                "https://api.github.com/repos/" + user.getName() + "/" + repoName + "/contents/" + path + multipartFile.getOriginalFilename(),
+                "https://api.github.com/repos/" + user.getName() + "/" + repoName + "/contents/" + path + fileName,
                 HttpMethod.PUT,
                 entity,
                 new ParameterizedTypeReference<>() {
                 });
-        log.info("github path : " + path + multipartFile.getOriginalFilename());
+        log.info("github path : " + path + fileName);
 
         return response.getBody();
     }

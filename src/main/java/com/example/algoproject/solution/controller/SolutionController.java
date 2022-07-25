@@ -10,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 
@@ -23,9 +22,8 @@ public class SolutionController {
 
     @Operation(summary="솔루션 업로드", description="code와 message 반환")
     @PostMapping(value="/create", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE})
-    public CommonResponse solutionAdd(@AuthenticationPrincipal CustomUserDetailsVO cudVO,
-                                 @RequestPart AddSolution solution, @RequestPart MultipartFile code) throws IOException {
-        return solutionService.create(cudVO, solution, code);
+    public CommonResponse solutionAdd(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @RequestPart AddSolution solution) throws IOException {
+        return solutionService.create(cudVO, solution);
     }
 
     @Operation(summary="솔루션 조회", description="제출한 솔루션 있으면 코드&리드미 파일 올라가 있는 s3 링크 반환. 없으면 null")
@@ -42,9 +40,8 @@ public class SolutionController {
 
     @Operation(summary="솔루션 업데이트", description="code와 message 반환")
     @PostMapping(value="/update/{solutionId}", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE})
-    public CommonResponse update(@AuthenticationPrincipal CustomUserDetailsVO cudVO,
-                                 @RequestPart(value="code", required = false) MultipartFile code, @RequestPart(value="solution", required = false) UpdateSolution solution, @PathVariable("solutionId") Long solutionId) throws IOException {
-        return solutionService.update(cudVO, solutionId, solution, code);
+    public CommonResponse update(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @RequestPart(value="solution") UpdateSolution solution, @PathVariable("solutionId") Long solutionId) throws IOException {
+        return solutionService.update(cudVO, solutionId, solution);
     }
 
     @Operation(summary="솔루션 삭제", description="등록한 솔루션을 삭제")

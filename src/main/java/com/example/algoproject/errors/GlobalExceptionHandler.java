@@ -22,7 +22,8 @@ public class GlobalExceptionHandler {
     private final ResponseService responseService;
 
     @ExceptionHandler({AlreadyExistMemberException.class, NotWriterUserException.class, NotMySolutionException.class,
-            AlreadyExistRepositoryNameException.class, SameNameException.class, SameUserException.class})
+            AlreadyExistRepositoryNameException.class, SameNameException.class, SameUserException.class,
+            AlreadyExistSolutionException.class})
     CommonResponse handleBadRequestException(Exception ex) {
         return handleBadRequest(ex);
     }
@@ -34,7 +35,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({NotExistUserException.class, NotExistStudyException.class, NotExistProblemException.class,
             NotExistSolutionException.class, NotExistSessionException.class, NotExistRepositoryException.class,
-            NotExistMemberException.class})
+            NotExistMemberException.class, NotExistCommentException.class})
     CommonResponse handleNotFoundException(Exception ex) {
         return handleNotFound(ex);
     }
