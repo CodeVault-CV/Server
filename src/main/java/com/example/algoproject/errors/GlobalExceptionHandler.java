@@ -24,7 +24,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({AlreadyExistMemberException.class, NotWriterUserException.class, NotMySolutionException.class,
             AlreadyExistRepositoryNameException.class, SameNameException.class, SameUserException.class,
-            AlreadyExistSolutionException.class})
+            AlreadyExistSolutionException.class, NotMatchProblemAndSolutionException.class, AlreadyDeleteSolutionException.class})
     CommonResponse handleBadRequestException(Exception ex) {
         return handleBadRequest(ex);
     }
