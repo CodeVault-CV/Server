@@ -2,6 +2,8 @@ package com.example.algoproject.solution.service;
 
 import com.example.algoproject.belongsto.domain.BelongsTo;
 import com.example.algoproject.belongsto.service.BelongsToService;
+import com.example.algoproject.errors.exception.badrequest.AlreadyDeleteSolutionException;
+import com.example.algoproject.errors.exception.badrequest.NotMatchProblemAndSolutionException;
 import com.example.algoproject.errors.exception.notfound.NotExistSolutionException;
 import com.example.algoproject.errors.exception.badrequest.NotMySolutionException;
 import com.example.algoproject.errors.exception.badrequest.AlreadyExistSolutionException;
@@ -13,6 +15,7 @@ import com.example.algoproject.solution.domain.Language;
 import com.example.algoproject.solution.domain.Solution;
 import com.example.algoproject.solution.dto.request.AddSolution;
 import com.example.algoproject.solution.dto.request.CommitFileRequest;
+import com.example.algoproject.solution.dto.request.DeleteSolution;
 import com.example.algoproject.solution.dto.request.UpdateSolution;
 import com.example.algoproject.solution.dto.response.SolutionInfo;
 import com.example.algoproject.solution.dto.response.SolutionListInfo;
@@ -64,11 +67,20 @@ public class SolutionService {
 
         long date = System.currentTimeMillis(); // 솔루션 등록한 시간 기록
         String commitMessage = pathUtil.makeCommitMessage(problem, user.getName()); // 커밋메세지 만듦
-        String fileName = problem.getNumber() + "." + addSolution.getLanguage(); // ***이거 프론트에서 언어 어케 주는지에 따라 매핑 해줘야될듯....
+        String fileName = problem.getNumber() + "." + mappedToExtension(addSolution.getLanguage()); // 문제 번호 + 프론트에서 주는 언어에 맞춰서 확장자 매핑해서 파일명 생성
 
         /* github에 file commit */
-        checkFileResponse(user, addSolution.getCode(), fileName, commitMessage, gitHubPath, study.getRepositoryName()); // code
-        checkFileResponse(user, addSolution.getReadMe(), "README.md", commitMessage, gitHubPath, study.getRepositoryName()); // readMe
+        String codeSHA = checkFileResponse(user, fileName, gitHubPath, study.getRepositoryName()); // code
+        String readMeSHA = checkFileResponse(user,"README.md", gitHubPath, study.getRepositoryName()); // readMe
+
+        if (codeSHA == null)
+            commitFileResponse(null, user, addSolution.getCode(), fileName, gitHubPath, study.getRepositoryName(), commitMessage);
+        else
+            commitFileResponse(codeSHA, user, addSolution.getCode(), fileName, gitHubPath, study.getRepositoryName(), commitMessage);
+        if (readMeSHA == null)
+            commitFileResponse(null, user, addSolution.getReadMe(), "README.md", gitHubPath, study.getRepositoryName(), commitMessage);
+        else
+            commitFileResponse(readMeSHA, user, addSolution.getReadMe(), "README.md", gitHubPath, study.getRepositoryName(), commitMessage);
 
         /* DB에 저장 */
         solutionRepository.save(new Solution(user, problem, addSolution.getCode(), addSolution.getReadMe(), new Timestamp(date), addSolution.getLanguage()));
@@ -81,7 +93,6 @@ public class SolutionService {
         Solution solution = solutionRepository.findById(solutionId).orElseThrow(NotExistSolutionException::new);
 
         return responseService.getSingleResponse(new SolutionInfo(solution.getCode(), solution.getReadMe(), solution.getDate(), solution.getReviews()));
-
     }
 
     public CommonResponse list(CustomUserDetailsVO cudVO, Long problemId) {
@@ -93,7 +104,7 @@ public class SolutionService {
         List<SolutionListInfo> list = new ArrayList<>();
 
         for (User member: getMemberList(belongs)) { // 현재 스터디의 팀원들 중에서, probelmId를 푼 팀원은 언어와 풀이여부 true 반환. 안 풀었으면 false 반환.
-            SolutionListInfo info = new SolutionListInfo(false, null, member.getName(), member.getImageUrl(), "none"); // language enum 타입이라 null 안됨.. 일단 nont으로 해둠
+            SolutionListInfo info = new SolutionListInfo(false, null, member.getName(), member.getImageUrl(), "none");
 
             for (Solution solution: solutions) {
                 if (solution.getUser().equals(member)) {
@@ -114,14 +125,25 @@ public class SolutionService {
         Problem problem = problemService.findById(updateSolution.getProblemId());
         Study study = studyService.findById(problem.getSession().getStudy().getId());
 
-        String gitHubPath = pathUtil.makeGitHubPath(solution.getProblem(), user.getName());
+        if (problem.getId() != solution.getProblem().getId()) // 요청한 solutionId가 속한 문제와 요청한 문제가 다른경우 예외처리
+            throw new NotMatchProblemAndSolutionException();
 
+        String gitHubPath = pathUtil.makeGitHubPath(solution.getProblem(), user.getName());
         String commitMessage = pathUtil.makeCommitMessage(problem, user.getName()); // 커밋메세지 만듦
-        String fileName = problem.getNumber() + "." + updateSolution.getLanguage(); // ***이거 프론트에서 언어 어케 주는지에 따라 매핑 해줘야될듯....
+        String fileName = problem.getNumber() + "." + mappedToExtension(updateSolution.getLanguage()); // 파일명 생성
 
         /* github에 file commit */
-        checkFileResponse(user, updateSolution.getCode(), fileName, commitMessage, gitHubPath, study.getRepositoryName());
-        checkFileResponse(user, updateSolution.getReadMe(), "README.md", commitMessage, gitHubPath, study.getRepositoryName());
+        String codeSHA = checkFileResponse(user, fileName, gitHubPath, study.getRepositoryName()); // code
+        String readMeSHA = checkFileResponse(user, "README.md", gitHubPath, study.getRepositoryName()); // readMe
+
+        if (codeSHA == null)
+            commitFileResponse(null, user, updateSolution.getCode(), fileName, gitHubPath, study.getRepositoryName(), commitMessage);
+        else
+            commitFileResponse(codeSHA, user, updateSolution.getCode(), fileName, gitHubPath, study.getRepositoryName(), commitMessage);
+        if (readMeSHA == null)
+            commitFileResponse(null, user, updateSolution.getReadMe(), "README.md", gitHubPath, study.getRepositoryName(), commitMessage);
+        else
+            commitFileResponse(readMeSHA, user, updateSolution.getReadMe(), "README.md", gitHubPath, study.getRepositoryName(), commitMessage);
 
         solution.setDate(new Timestamp(System.currentTimeMillis()));
         solution.setCode(updateSolution.getCode());
@@ -134,10 +156,29 @@ public class SolutionService {
 
     public CommonResponse delete(CustomUserDetailsVO cudVO, Long solutionId) {
 
+        User user = userService.findById(cudVO.getUsername());
         Solution solution = solutionRepository.findById(solutionId).orElseThrow(NotExistSolutionException::new);
+        Problem problem = solution.getProblem();
+        Study study = studyService.findById(problem.getSession().getStudy().getId());
 
         if (!cudVO.getUsername().equals(solution.getUser().getId())) // 내 솔루션 아니면 삭제 불가
             throw new NotMySolutionException();
+
+        String gitHubPath = pathUtil.makeGitHubPath(solution.getProblem(), user.getName());
+        String commitMessage = pathUtil.makeCommitMessage(problem, user.getName()); // 커밋메세지 만듦
+        String fileName = problem.getNumber() + "." + mappedToExtension(solution.getLanguage().name()); // 파일명 생성
+
+        /* 삭제할 파일의 깃허브 SHA 가져옴 */
+        String codeSHA = checkFileResponse(user, fileName, gitHubPath, study.getRepositoryName());
+        String readMeSHA = checkFileResponse(user, "README.md", gitHubPath, study.getRepositoryName());
+        if (codeSHA == null) // github에서 해당 파일 삭제해버린 경우 예외처리
+            throw new AlreadyDeleteSolutionException();
+        else
+            deleteFileResponse(codeSHA, user, study.getRepositoryName(), gitHubPath, fileName, commitMessage);
+        if (readMeSHA == null)
+            throw new AlreadyDeleteSolutionException();
+        else
+            deleteFileResponse(readMeSHA, user, study.getRepositoryName(), gitHubPath, "README.md", commitMessage);
 
         solutionRepository.delete(solution); // 솔루션 삭제
 
@@ -156,7 +197,7 @@ public class SolutionService {
     private method
     */
 
-    private void checkFileResponse(User user, String content, String fileName, String commitMessage, String path, String repoName) throws IOException {
+    private String checkFileResponse(User user, String fileName, String path, String repoName) {
         HttpHeaders headers = new HttpHeaders();
         headers.add("Accept", "application/vnd.github.v3+json");
         headers.add("User-Agent", "api-test");
@@ -172,15 +213,14 @@ public class SolutionService {
                     entity,
                     new ParameterizedTypeReference<>() {
                     });
-
-            commitFileResponse(response.getBody().get("sha").toString(), user, content, fileName, path, repoName, commitMessage);
+            return response.getBody().get("sha").toString();
         } catch (HttpClientErrorException e) { // 깃허브에 파일 존재 x. 새로 생성되는 파일인 경우 404 에러 뜸.
-            commitFileResponse(null, user, content, fileName, path, repoName, commitMessage);
+            return null;
         }
     }
 
     /* github file commit 메소드 */
-    private Map<String, Object> commitFileResponse(String sha, User user, String content, String fileName, String path, String repoName, String commitMessage) throws IOException {
+    private void commitFileResponse(String sha, User user, String content, String fileName, String path, String repoName, String commitMessage) throws IOException {
         HttpHeaders headers = new HttpHeaders();
         headers.add("Accept", "application/vnd.github.v3+json");
         headers.add("User-Agent", "api-test");
@@ -204,9 +244,30 @@ public class SolutionService {
                 entity,
                 new ParameterizedTypeReference<>() {
                 });
-        log.info("github path : " + path + fileName);
+    }
 
-        return response.getBody();
+    private void deleteFileResponse(String sha, User user, String repoName, String path, String fileName, String commitMessage) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Accept", "application/vnd.github.v3+json");
+        headers.add("User-Agent", "api-test");
+        headers.add("Authorization", "token " + user.getAccessToken());
+
+        DeleteSolution request = new DeleteSolution();
+        request.setMessage(commitMessage);
+
+        if (sha != null)
+            request.setSha(sha);
+
+        HttpEntity<DeleteSolution> entity = new HttpEntity<>(request, headers);
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                "https://api.github.com/repos/" + user.getName() + "/" + repoName + "/contents/" + path + fileName,
+                HttpMethod.DELETE,
+                entity,
+                new ParameterizedTypeReference<>() {
+                });
     }
 
     private List<User> getMemberList(List<BelongsTo> belongs) {
