@@ -53,10 +53,8 @@ public class SolutionService {
 
         User user = userService.findById(cudVO.getUsername());
         Problem problem = problemService.findById(addSolution.getProblemId());
-
         Study study = studyService.findById(problem.getSession().getStudy().getId());
         Optional<Solution> alreadyExist = solutionRepository.findByProblemAndUser(problem, user);
-
 
         if (alreadyExist.isPresent()) // 이미 현재유저가 해당 문제에 솔루션 등록한 경우
             throw new AlreadyExistSolutionException();
@@ -219,6 +217,30 @@ public class SolutionService {
             members.add(belongsTo.getMember());
 
         return members;
+    }
+
+    private String mappedToExtension(String language) {
+
+        String extension = "";
+        switch(language) {
+            case "cpp": extension = "cpp";
+                break;
+            case "java": extension =  "java";
+                break;
+            case "javascript": extension =  "js";
+                break;
+            case "kotlin": extension =  "kt";
+                break;
+            case "python": extension =  "py";
+                break;
+            case "swift": extension =  "swift";
+                break;
+            case "typescript": extension =  "ts";
+                break;
+            default: extension = "none";
+                break;
+        }
+        return extension;
     }
 
 }
