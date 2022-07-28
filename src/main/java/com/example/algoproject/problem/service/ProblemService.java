@@ -57,7 +57,7 @@ public class ProblemService {
         // 유저가 해당 스터디에 소속되어 있는지 확인
         studyService.checkAuth(userService.findById(cudVO.getUsername()), session.getStudy());
 
-        return responseService.getListResponse(getProblemInfos(session.getProblems()));
+        return responseService.getListResponse(getProblemInfos(problemRepository.findBySession(session)));
     }
 
     @Transactional
