@@ -38,6 +38,10 @@ public class Solution {
 
     private Language language; //사용 언어
 
+    private String codePath; // 깃허브의 코드 path
+
+    private String readMePath; // 깃허브의 리드미 path
+
     @OneToMany(
             mappedBy = "solution",
             cascade = CascadeType.ALL,
@@ -45,13 +49,15 @@ public class Solution {
     )
     private List<Review> reviews = new ArrayList<>();
 
-    public Solution(User user, Problem problem, String code, String readMe, Timestamp date, String language) {
+    public Solution(User user, Problem problem, String code, String readMe, Timestamp date, String language, String codePath, String readMePath) {
         this.user = user;
         this.problem = problem;
         this.code = code;
         this.readMe = readMe;
         this.date = date;
         this.language = Language.valueOf(language);
+        this.codePath = codePath;
+        this.readMePath = readMePath;
     }
 
     public void addReview(Review review) {
