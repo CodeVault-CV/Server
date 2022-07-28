@@ -58,13 +58,6 @@ public class Problem {
         return sb.append(number).toString();
     }
 
-    public void addSolution(Solution solution) {
-        this.solutions.add(solution);
-
-        if(solution.getProblem() != this)
-            solution.setProblem(this);
-    }
-
     public void setSession(Session session) {
         this.session = session;
 
