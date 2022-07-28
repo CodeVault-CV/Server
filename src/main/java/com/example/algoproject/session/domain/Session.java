@@ -19,7 +19,7 @@ public class Session {
 
     @Id
     @Column(name = "session_id")
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @GeneratedValue
     private Long id;
 
     private String name;

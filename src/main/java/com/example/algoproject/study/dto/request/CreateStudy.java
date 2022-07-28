@@ -14,7 +14,7 @@ public class CreateStudy {
     @NotNull(message = "스터디 이름은 필수 입력값입니다")
     String studyName;
 
-    @Pattern(regexp = "[a-zA-z0-9,\\-]{2,10}", message = "저장소의 이름은 2~10 글자의 영어대•소문자, -, _ 만 사용이 가능합니다")
+    @Pattern(regexp = "[a-zA-z0-9,\\-]{1,39}", message = "저장소의 이름은 1~39 글자의 영어대•소문자, -, _ 만 사용이 가능합니다")
     @NotBlank(message = "레포지토리 이름은 필수 입력값입니다")
     String repoName;
 }
