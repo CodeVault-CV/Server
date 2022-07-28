@@ -64,7 +64,7 @@ public class ProblemService {
     public CommonResponse delete(CustomUserDetailsVO cudVO, Long id) {
 
         // 유저가 팀장인지 확인
-        studyService.checkAuth(userService.findById(cudVO.getUsername()), findById(id).getSession().getStudy());
+        studyService.checkLeader(userService.findById(cudVO.getUsername()), findById(id).getSession().getStudy());
 
         problemRepository.delete(findById(id));
         return responseService.getSuccessResponse();
