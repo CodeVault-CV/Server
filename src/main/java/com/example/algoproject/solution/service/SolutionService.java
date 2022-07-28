@@ -178,14 +178,9 @@ public class SolutionService {
         /* 삭제할 파일의 깃허브 SHA 가져옴 */
         String codeSHA = checkFileResponse(user, fileName, path, study.getRepositoryName());
         String readMeSHA = checkFileResponse(user, "README.md", path, study.getRepositoryName());
-        if (codeSHA == null) // github에서 해당 파일 삭제해버린 경우 예외처리
-            throw new AlreadyDeleteSolutionException();
-        else
-            deleteFileResponse(codeSHA, user, study.getRepositoryName(), path, fileName, commitMessage);
-        if (readMeSHA == null)
-            throw new AlreadyDeleteSolutionException();
-        else
-            deleteFileResponse(readMeSHA, user, study.getRepositoryName(), path, "README.md", commitMessage);
+
+        deleteFileResponse(codeSHA, user, study.getRepositoryName(), path, fileName, commitMessage);
+        deleteFileResponse(readMeSHA, user, study.getRepositoryName(), path, "README.md", commitMessage);
 
         return responseService.getSuccessResponse();
     }
@@ -199,11 +194,18 @@ public class SolutionService {
             List<String> removed = (List<String>) pushMap.get("removed");
 
             if (!removed.isEmpty()) { // 솔루션 삭제
-                for (String path: removed)
-                    solutionRepository.delete(findByCodePath(path).get());
+                for (String path: removed) {
+                    Solution solution = findByCodePath(path).get();
 
-//                for (Solution solution: deleteList)
-//                    solutionRepository.delete(solution);
+                    if (solution.getCodePath() == path) // 코드파일이 삭제됐음 -> 코드패스 blank
+                        solution.setCodePath("");
+                    else
+                        solution.setReadMe(""); // 리드미파일이 삭제됐음 -> 리드미패스 blank
+
+                    if (solution.getCodePath() == "" && solution.getReadMePath() == "") // 둘 다 삭제됐으면 해당 솔루션 DB에서 삭제
+                        solutionRepository.delete(solution);
+                }
+
             }
         }
     }
@@ -214,6 +216,10 @@ public class SolutionService {
 
     public Optional<Solution> findByCodePath(String codePath) {
         return solutionRepository.findByCodePath(codePath);
+    }
+
+    public Optional<Solution> findByReadMePath(String readMePath) {
+        return solutionRepository.findByReadMePath(readMePath);
     }
 
     public void save(Solution solution) {
