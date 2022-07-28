@@ -25,13 +25,10 @@ public class ProblemInfo {
     @NotNull
     private Platform platform;
 
-    private List<Solution> solutions;
-
     public ProblemInfo(Problem problem) {
         this.number = problem.getNumber();
         this.name = problem.getName();
         this.url = problem.getUrl();
         this.platform = problem.getPlatform();
-        this.solutions = problem.getSolutions();
     }
 }
