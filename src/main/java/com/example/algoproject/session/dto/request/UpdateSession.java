@@ -9,15 +9,15 @@ import java.util.Date;
 @Data
 public class UpdateSession {
 
-    @NotNull
+    @NotNull(message = "세션 ID는 필수 입력값입니다")
     private Long id;
 
-    @NotBlank
+    @NotNull(message = "세션 이름은 필수 입력값입니다")
     private String name;
 
-    @NotNull
+    @NotNull(message = "세션의 시작 날짜는 필수 입력값입니다")
     private Date start;
 
-    @NotNull
+    @NotNull(message = "세션의 끝 날짜는 필수 입력값입니다")
     private Date end;
 }

@@ -22,7 +22,7 @@ public class StudyController {
 
     private final StudyService studyService;
 
-    @Operation(summary = "스터디 생성", description = "studyName(스터디 이름), repoName(Git 저장소 이름)을 받아 id(스터디 ID) 반환")
+    @Operation(summary = "스터디 생성", description = "studyName(스터디 이름), repoName(Git 저장소 이름)을 받아 스터디 정보를 반환")
     @PostMapping()
     public CommonResponse studyAdd(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @RequestBody @Valid CreateStudy request) {
         return studyService.create(cudVO, request);

@@ -4,7 +4,6 @@ import com.example.algoproject.problem.domain.Problem;
 import com.example.algoproject.session.dto.request.CreateSession;
 import com.example.algoproject.session.dto.request.UpdateSession;
 import com.example.algoproject.study.domain.Study;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -29,12 +28,10 @@ public class Session {
 
     private Date end;
 
-    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "study_id")
     private Study study;
 
-    @JsonIgnore
     @OneToMany(
             mappedBy = "session",
             cascade = {CascadeType.ALL},
