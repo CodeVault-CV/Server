@@ -69,7 +69,7 @@ public class StudyService {
         // 스터디 생성시 팀장을 스터디 멤버에 추가
         belongsToService.save(new BelongsTo(leader, study));
 
-        return responseService.getSingleResponse(response.get("id").toString());
+        return responseService.getSingleResponse(new StudyInfo(study, getMemberInfos(getMembers(study))));
     }
 
     @Transactional
@@ -88,7 +88,7 @@ public class StudyService {
         study.setName(request.getName());
         save(study);
 
-        return responseService.getSuccessResponse();
+        return responseService.getSingleResponse(new StudyInfo(study, getMemberInfos(getMembers(study))));
     }
 
     @Transactional
