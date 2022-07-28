@@ -12,6 +12,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.util.Map;
 
 @RequiredArgsConstructor
 @RequestMapping("/api/solution")
@@ -48,5 +49,10 @@ public class SolutionController {
     @DeleteMapping("/delete/{solutionId}")
     public CommonResponse solutionRemove(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @PathVariable("solutionId") Long solutionId) {
         return solutionService.delete(cudVO, solutionId);
+    }
+
+    @PostMapping("/webhook")
+    public void solutionWebhook(@RequestBody Map<String, Object> response) {
+        solutionService.webhook(response);
     }
 }

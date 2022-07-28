@@ -13,6 +13,8 @@ import com.example.algoproject.errors.exception.notfound.NotExistRepositoryExcep
 import com.example.algoproject.errors.exception.notfound.NotExistStudyException;
 import com.example.algoproject.errors.response.CommonResponse;
 import com.example.algoproject.errors.response.ResponseService;
+import com.example.algoproject.solution.domain.Solution;
+import com.example.algoproject.solution.service.SolutionService;
 import com.example.algoproject.study.domain.Study;
 import com.example.algoproject.study.dto.request.*;
 import com.example.algoproject.study.dto.response.StudyInfo;
@@ -44,6 +46,9 @@ public class StudyService {
     @Value("${baseUrl}")
     private String url;
 
+    @Value("${baseUrl2}")
+    private String url2;
+
     private final StudyRepository studyRepository;
     private final UserService userService;
     private final BelongsToService belongsToService;
@@ -60,8 +65,12 @@ public class StudyService {
         // 팀장의 github 이름으로 repoName 이 이름인 레포지토리 생성
         Map<String, Object> response = createRepositoryResponse(leader, request.getRepoName());
 
+        String[] events1 = {"member", "repository"};
+        String[] events2 = {"push"};
+
         // 스터디에 해당하는 Repository 의 webhook 생성
-        createWebhookResponse(leader, request.getRepoName());
+        createWebhookResponse(leader, request.getRepoName(), this.url, events1);
+        createWebhookResponse(leader, request.getRepoName(), this.url2, events2);
 
         Study study = new Study(response.get("id").toString(), request.getStudyName(), cudVO.getUsername(), response.get("name").toString(), response.get("html_url").toString());
         save(study);
@@ -314,10 +323,10 @@ public class StudyService {
         }
     }
 
-    private void createWebhookResponse(User leader, String repoName) {
+    private void createWebhookResponse(User leader, String repoName, String webhookUrl, String[] events) {
         HttpHeaders headers = makeHeader(leader);
-        CreateWebhook request = new CreateWebhook();
-        request.getConfig().setUrl(this.url);
+        CreateWebhook request = new CreateWebhook(events);
+        request.getConfig().setUrl(webhookUrl);
         HttpEntity<CreateWebhook> entity = new HttpEntity<>(request, headers);
         RestTemplate restTemplate = new RestTemplate();
         restTemplate.exchange(

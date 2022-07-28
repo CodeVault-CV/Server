@@ -14,4 +14,5 @@ public interface SolutionRepository extends JpaRepository<Solution, Long> {
 
     List<Solution> findByProblem(Problem problem);
     Optional<Solution> findByProblemAndUser(Problem problem, User user);
+    Optional<Solution> findByCodePath(String codePath);
 }
