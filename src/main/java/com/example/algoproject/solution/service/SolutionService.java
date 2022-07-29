@@ -197,10 +197,14 @@ public class SolutionService {
                 for (String path: removed) {
                     Solution solution = findByCodePath(path).get();
 
-                    if (solution.getCodePath().equals(path)) // 코드파일이 삭제됐음 -> 코드패스 blank
+                    if (solution.getCodePath().equals(path)) { // 코드파일이 삭제됐음 -> 코드 blank
+                        solution.setCode("");
                         solution.setCodePath("");
-                    else
-                        solution.setReadMe(""); // 리드미파일이 삭제됐음 -> 리드미패스 blank
+                    }
+                    if (solution.getReadMePath().equals(path)) { // 리드미파일이 삭제됐음 -> 리드미 blank
+                        solution.setReadMe("");
+                        solution.setReadMePath("");
+                    }
                     solutionRepository.save(solution);
 
                     if (solution.getCodePath().equals("") && solution.getReadMePath().equals("")) // 둘 다 삭제됐으면 해당 솔루션 DB에서 삭제
