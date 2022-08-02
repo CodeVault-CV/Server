@@ -1,5 +1,6 @@
 package com.example.algoproject.review.service;
 
+import com.example.algoproject.problem.domain.Problem;
 import com.example.algoproject.review.domain.Review;
 import com.example.algoproject.review.dto.AddReview;
 import com.example.algoproject.review.dto.UpdateReview;
@@ -10,6 +11,8 @@ import com.example.algoproject.errors.response.CommonResponse;
 import com.example.algoproject.errors.response.ResponseService;
 import com.example.algoproject.solution.domain.Solution;
 import com.example.algoproject.solution.service.SolutionService;
+import com.example.algoproject.study.domain.Study;
+import com.example.algoproject.study.service.StudyService;
 import com.example.algoproject.user.domain.User;
 import com.example.algoproject.user.dto.CustomUserDetailsVO;
 import com.example.algoproject.user.service.UserService;
@@ -24,12 +27,18 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final ResponseService responseService;
     private final UserService userService;
+    private final StudyService studyService;
     private final SolutionService solutionService;
 
     @Transactional
     public CommonResponse create(CustomUserDetailsVO cudVO, AddReview request) {
         User user = userService.findById(cudVO.getUsername());
         Solution solution = solutionService.findById(request.getSolutionId());
+        Problem problem = solution.getProblem();
+        Study study = studyService.findById(problem.getSession().getStudy().getId());
+
+        // 유저가 스터디에 속한 멤버인지 확인
+        studyService.checkAuth(user, study);
 
         Review review = new Review(user.getId(), request.getContent());
 
