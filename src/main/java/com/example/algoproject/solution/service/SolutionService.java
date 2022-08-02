@@ -2,7 +2,6 @@ package com.example.algoproject.solution.service;
 
 import com.example.algoproject.belongsto.domain.BelongsTo;
 import com.example.algoproject.belongsto.service.BelongsToService;
-import com.example.algoproject.errors.exception.badrequest.AlreadyDeleteSolutionException;
 import com.example.algoproject.errors.exception.badrequest.NotMatchProblemAndSolutionException;
 import com.example.algoproject.errors.exception.notfound.NotExistSolutionException;
 import com.example.algoproject.errors.exception.badrequest.NotMySolutionException;
@@ -57,9 +56,13 @@ public class SolutionService {
         User user = userService.findById(cudVO.getUsername());
         Problem problem = problemService.findById(addSolution.getProblemId());
         Study study = studyService.findById(problem.getSession().getStudy().getId());
+        User leader = userService.findById(study.getLeaderId());
         Optional<Solution> alreadyExist = solutionRepository.findByProblemAndUser(problem, user);
 
-        if (alreadyExist.isPresent()) // 이미 현재유저가 해당 문제에 솔루션 등록한 경우
+        // 유저가 스터디에 속한 멤버인지 확인
+        studyService.checkAuth(user, study);
+
+        if (alreadyExist.isPresent()) // 이미 현재유저가 해당 문제에 솔루션 등록했는지 확인
             throw new AlreadyExistSolutionException();
 
         long date = System.currentTimeMillis(); // 솔루션 등록한 시간 기록
@@ -72,17 +75,11 @@ public class SolutionService {
         log.info("github repository path : " + path);
 
         /* github에 file commit */
-        String codeSHA = checkFileResponse(user, fileName, path, study.getRepositoryName()); // code
-        String readMeSHA = checkFileResponse(user,"README.md", path, study.getRepositoryName()); // readMe
+        String codeSHA = checkFileResponse(leader, user, fileName, path, study.getRepositoryName()); // code
+        String readMeSHA = checkFileResponse(leader, user, "README.md", path, study.getRepositoryName()); // readMe
 
-        if (codeSHA == null)
-            commitFileResponse(null, user, addSolution.getCode(), fileName, path, study.getRepositoryName(), commitMessage);
-        else
-            commitFileResponse(codeSHA, user, addSolution.getCode(), fileName, path, study.getRepositoryName(), commitMessage);
-        if (readMeSHA == null)
-            commitFileResponse(null, user, addSolution.getReadMe(), "README.md", path, study.getRepositoryName(), commitMessage);
-        else
-            commitFileResponse(readMeSHA, user, addSolution.getReadMe(), "README.md", path, study.getRepositoryName(), commitMessage);
+        commitFileResponse(codeSHA, leader, user, addSolution.getCode(), fileName, path, study.getRepositoryName(), commitMessage);
+        commitFileResponse(readMeSHA, leader, user, addSolution.getReadMe(), "README.md", path, study.getRepositoryName(), commitMessage);
 
         /* DB에 저장 */
         solutionRepository.save(new Solution(user, problem, addSolution.getCode(), addSolution.getReadMe(), new Timestamp(date), addSolution.getLanguage(), codePath, readMePath));
@@ -92,18 +89,28 @@ public class SolutionService {
 
     public CommonResponse detail(CustomUserDetailsVO cudVO, Long solutionId) {
 
+        User user = userService.findById(cudVO.getUsername());
         Solution solution = solutionRepository.findById(solutionId).orElseThrow(NotExistSolutionException::new);
+        Problem problem = solution.getProblem();
+        Study study = studyService.findById(problem.getSession().getStudy().getId());
+
+        // 유저가 스터디에 속한 멤버인지 확인
+        studyService.checkAuth(user, study);
 
         return responseService.getSingleResponse(new SolutionInfo(solution.getCode(), solution.getReadMe(), solution.getDate(), solution.getReviews()));
     }
 
     public CommonResponse list(CustomUserDetailsVO cudVO, Long problemId) {
 
+        User user = userService.findById(cudVO.getUsername());
         Problem problem = problemService.findById(problemId);
         Study study = studyService.findById(problem.getSession().getStudy().getId());
         List<BelongsTo> belongs =  belongsToService.findByStudy(study);
-        List<Solution> solutions = solutionRepository.findByProblem(problem); // null일 수도 있음
+        List<Solution> solutions = solutionRepository.findByProblem(problem);
         List<SolutionListInfo> list = new ArrayList<>();
+
+        // 유저가 스터디에 속한 멤버인지 확인
+        studyService.checkAuth(user, study);
 
         for (User member: getMemberList(belongs)) { // 현재 스터디의 팀원들 중에서, probelmId를 푼 팀원은 언어와 풀이여부 true 반환. 안 풀었으면 false 반환.
             SolutionListInfo info = new SolutionListInfo(false, null, member.getName(), member.getImageUrl(), "none");
@@ -126,8 +133,11 @@ public class SolutionService {
         Solution solution = solutionRepository.findById(solutionId).orElseThrow(NotExistSolutionException::new);
         Problem problem = problemService.findById(updateSolution.getProblemId());
         Study study = studyService.findById(problem.getSession().getStudy().getId());
+        User leader = userService.findById(study.getLeaderId());
 
-        if (problem.getId() != solution.getProblem().getId()) // 요청한 solutionId가 속한 문제와 요청한 문제가 다른경우 예외처리
+        checkMySolution(user, solution); // 내 솔루션인지 확인
+
+        if (problem.getId() != solution.getProblem().getId()) // 요청한 solutionId가 속한 문제와 요청한 문제가 다른경우 확인
             throw new NotMatchProblemAndSolutionException();
 
         String path = pathUtil.makeGitHubPath(solution.getProblem(), user.getName());
@@ -136,18 +146,12 @@ public class SolutionService {
         String commitMessage = pathUtil.makeCommitMessage(problem, user.getName()); // 커밋메세지 만듦
 
 
-        /* github에 file commit */
-        String codeSHA = checkFileResponse(user, fileName, path, study.getRepositoryName()); // code
-        String readMeSHA = checkFileResponse(user, "README.md", path, study.getRepositoryName()); // readMe
+        /* github file commit */
+        String codeSHA = checkFileResponse(leader, user, fileName, path, study.getRepositoryName()); // code
+        String readMeSHA = checkFileResponse(leader, user, "README.md", path, study.getRepositoryName()); // readMe
 
-        if (codeSHA == null)
-            commitFileResponse(null, user, updateSolution.getCode(), fileName, path, study.getRepositoryName(), commitMessage);
-        else
-            commitFileResponse(codeSHA, user, updateSolution.getCode(), fileName, path, study.getRepositoryName(), commitMessage);
-        if (readMeSHA == null)
-            commitFileResponse(null, user, updateSolution.getReadMe(), "README.md", path, study.getRepositoryName(), commitMessage);
-        else
-            commitFileResponse(readMeSHA, user, updateSolution.getReadMe(), "README.md", path, study.getRepositoryName(), commitMessage);
+        commitFileResponse(codeSHA, leader, user, updateSolution.getCode(), fileName, path, study.getRepositoryName(), commitMessage);
+        commitFileResponse(readMeSHA, leader, user, updateSolution.getReadMe(), "README.md", path, study.getRepositoryName(), commitMessage);
 
         solution.setDate(new Timestamp(System.currentTimeMillis()));
         solution.setCode(updateSolution.getCode());
@@ -165,22 +169,21 @@ public class SolutionService {
         Solution solution = solutionRepository.findById(solutionId).orElseThrow(NotExistSolutionException::new);
         Problem problem = solution.getProblem();
         Study study = studyService.findById(problem.getSession().getStudy().getId());
+        User leader = userService.findById(study.getLeaderId());
 
-        if (!cudVO.getUsername().equals(solution.getUser().getId())) // 내 솔루션 아니면 삭제 불가
-            throw new NotMySolutionException();
+        checkMySolution(user, solution); // 내 솔루션인지 확인
 
-        solutionRepository.delete(solution); // 솔루션 삭제
+        solutionRepository.delete(solution); // 솔루션 DB 삭제
 
         String path = pathUtil.makeGitHubPath(solution.getProblem(), user.getName());
         String commitMessage = pathUtil.makeCommitMessage(problem, user.getName()); // 커밋메세지 만듦
         String fileName = problem.getNumber() + "." + mappedToExtension(solution.getLanguage().name()); // 파일명 생성
 
-        /* 삭제할 파일의 깃허브 SHA 가져옴 */
-        String codeSHA = checkFileResponse(user, fileName, path, study.getRepositoryName());
-        String readMeSHA = checkFileResponse(user, "README.md", path, study.getRepositoryName());
-
-        deleteFileResponse(codeSHA, user, study.getRepositoryName(), path, fileName, commitMessage);
-        deleteFileResponse(readMeSHA, user, study.getRepositoryName(), path, "README.md", commitMessage);
+        String codeSHA = checkFileResponse(leader, user, fileName, path, study.getRepositoryName());
+        String readMeSHA = checkFileResponse(leader, user, "README.md", path, study.getRepositoryName());
+        // 솔루션 github 삭제
+        deleteFileResponse(codeSHA, leader, user, study.getRepositoryName(), path, fileName, commitMessage);
+        deleteFileResponse(readMeSHA, leader, user, study.getRepositoryName(), path, "README.md", commitMessage);
 
         return responseService.getSuccessResponse();
     }
@@ -195,7 +198,7 @@ public class SolutionService {
 
             if (!removed.isEmpty()) { // 솔루션 삭제
                 for (String path: removed) {
-                    Solution solution = findByCodePath(path).get();
+                    Solution solution = findByPath(path).get();
 
                     if (solution.getCodePath().equals(path)) { // 코드파일이 삭제됐음 -> 코드 blank
                         solution.setCode("");
@@ -218,23 +221,30 @@ public class SolutionService {
         return solutionRepository.findById(solutionId).orElseThrow(NotExistSolutionException::new);
     }
 
-    public Optional<Solution> findByCodePath(String codePath) {
-        return solutionRepository.findByCodePath(codePath);
-    }
+    public Optional<Solution> findByPath(String path) {
+        Optional<Solution> solutionCode = solutionRepository.findByCodePath(path);
+        Optional<Solution> solutionReadMe = solutionRepository.findByReadMePath(path);
 
-    public Optional<Solution> findByReadMePath(String readMePath) {
-        return solutionRepository.findByReadMePath(readMePath);
+        if (!solutionCode.isEmpty())
+            return solutionCode;
+        else
+            return solutionReadMe;
     }
 
     public void save(Solution solution) {
         solutionRepository.save(solution);
     }
 
+    public void checkMySolution(User user, Solution solution) {
+        if (!user.getId().equals(solution.getUser().getId())) // 내 솔루션 아니면 삭제 불가
+            throw new NotMySolutionException();
+    }
+
     /*
     private method
     */
 
-    private String checkFileResponse(User user, String fileName, String path, String repoName) {
+    private String checkFileResponse(User leader, User user, String fileName, String path, String repoName) {
         HttpHeaders headers = new HttpHeaders();
         headers.add("Accept", "application/vnd.github.v3+json");
         headers.add("User-Agent", "api-test");
@@ -245,7 +255,7 @@ public class SolutionService {
         HttpEntity entity = new HttpEntity<>(headers); // http entity에 header 담아줌
         try { // 깃허브에 파일 존재.
             ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
-                    "https://api.github.com/repos/" + user.getName() + "/" + repoName + "/contents/" + path + fileName,
+                    "https://api.github.com/repos/" + leader.getName() + "/" + repoName + "/contents/" + path + fileName,
                     HttpMethod.GET,
                     entity,
                     new ParameterizedTypeReference<>() {
@@ -257,7 +267,7 @@ public class SolutionService {
     }
 
     /* github file commit 메소드 */
-    private void commitFileResponse(String sha, User user, String content, String fileName, String path, String repoName, String commitMessage) throws IOException {
+    private void commitFileResponse(String sha, User leader, User user, String content, String fileName, String path, String repoName, String commitMessage) throws IOException {
         HttpHeaders headers = new HttpHeaders();
         headers.add("Accept", "application/vnd.github.v3+json");
         headers.add("User-Agent", "api-test");
@@ -276,14 +286,14 @@ public class SolutionService {
         RestTemplate restTemplate = new RestTemplate();
 
         ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
-                "https://api.github.com/repos/" + user.getName() + "/" + repoName + "/contents/" + path + fileName,
+                "https://api.github.com/repos/" + leader.getName() + "/" + repoName + "/contents/" + path + fileName,
                 HttpMethod.PUT,
                 entity,
                 new ParameterizedTypeReference<>() {
                 });
     }
 
-    private void deleteFileResponse(String sha, User user, String repoName, String path, String fileName, String commitMessage) {
+    private void deleteFileResponse(String sha, User leader, User user, String repoName, String path, String fileName, String commitMessage) {
         HttpHeaders headers = new HttpHeaders();
         headers.add("Accept", "application/vnd.github.v3+json");
         headers.add("User-Agent", "api-test");
@@ -300,7 +310,7 @@ public class SolutionService {
         RestTemplate restTemplate = new RestTemplate();
 
         ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
-                "https://api.github.com/repos/" + user.getName() + "/" + repoName + "/contents/" + path + fileName,
+                "https://api.github.com/repos/" + leader.getName() + "/" + repoName + "/contents/" + path + fileName,
                 HttpMethod.DELETE,
                 entity,
                 new ParameterizedTypeReference<>() {
@@ -319,25 +329,16 @@ public class SolutionService {
 
     private String mappedToExtension(String language) {
 
-        String extension = "";
-        switch(language) {
-            case "cpp": extension = "cpp";
-                break;
-            case "java": extension =  "java";
-                break;
-            case "javascript": extension =  "js";
-                break;
-            case "kotlin": extension =  "kt";
-                break;
-            case "python": extension =  "py";
-                break;
-            case "swift": extension =  "swift";
-                break;
-            case "typescript": extension =  "ts";
-                break;
-            default: extension = "none";
-                break;
-        }
+        String extension = switch (language) {
+            case "cpp" -> "cpp";
+            case "java" -> "java";
+            case "javascript" -> "js";
+            case "kotlin" -> "kt";
+            case "python" -> "py";
+            case "swift" -> "swift";
+            case "typescript" -> "ts";
+            default -> "none";
+        };
         return extension;
     }
 
