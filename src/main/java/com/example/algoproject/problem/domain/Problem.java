@@ -50,7 +50,7 @@ public class Problem {
     private String setUrl(String platform, String number) {
         StringBuilder sb = new StringBuilder();
 
-        if (platform.equals("Programmers"))
+        if (platform.equals("programmers"))
             sb.append("https://programmers.co.kr/learn/courses/30/lessons/");
         else
             sb.append("https://www.acmicpc.net/problem/");
