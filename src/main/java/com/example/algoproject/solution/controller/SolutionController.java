@@ -51,8 +51,9 @@ public class SolutionController {
         return solutionService.delete(cudVO, solutionId);
     }
 
-    @PostMapping("/webhook")
-    public void solutionWebhook(@RequestBody Map<String, Object> response) {
-        solutionService.webhook(response);
+    @Operation(summary = "Push Webhook의 payload를 받는 API (Client에서는 사용 X)")
+    @PostMapping("/push-webhook")
+    public void pushWebhook(@RequestBody Map<String, Object> response) {
+        solutionService.pushWebhook(response);
     }
 }

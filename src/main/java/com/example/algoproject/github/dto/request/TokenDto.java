@@ -1,4 +1,4 @@
-package com.example.algoproject.user.dto;
+package com.example.algoproject.github.dto.request;
 
 import lombok.Data;
 
