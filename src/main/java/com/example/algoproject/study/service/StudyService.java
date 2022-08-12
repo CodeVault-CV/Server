@@ -13,8 +13,6 @@ import com.example.algoproject.errors.exception.notfound.NotExistRepositoryExcep
 import com.example.algoproject.errors.exception.notfound.NotExistStudyException;
 import com.example.algoproject.errors.response.CommonResponse;
 import com.example.algoproject.errors.response.ResponseService;
-import com.example.algoproject.solution.domain.Solution;
-import com.example.algoproject.solution.service.SolutionService;
 import com.example.algoproject.study.domain.Study;
 import com.example.algoproject.study.dto.request.*;
 import com.example.algoproject.study.dto.response.StudyInfo;
@@ -100,7 +98,7 @@ public class StudyService {
         return responseService.getSingleResponse(new StudyInfo(study, getMemberInfos(getMembers(study))));
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public CommonResponse detail(CustomUserDetailsVO cudVO, String id) {
 
         User user = userService.findById(cudVO.getUsername());
@@ -113,7 +111,7 @@ public class StudyService {
         return responseService.getSingleResponse(new StudyInfo(study, getMemberInfos(members)));
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public CommonResponse list(CustomUserDetailsVO cudVO) {
         return responseService.getListResponse(getStudyInfos(userService.findById(cudVO.getUsername())));
     }
@@ -192,7 +190,7 @@ public class StudyService {
         return responseService.getSuccessResponse();
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public CommonResponse searchMember(CustomUserDetailsVO cudVO, SearchUser request) {
 
         log.info("search user name: {}", request.getName());
@@ -254,7 +252,7 @@ public class StudyService {
         studyRepository.save(study);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public Study findById(String id) {
         return studyRepository.findById(id).orElseThrow(NotExistStudyException::new);
     }
