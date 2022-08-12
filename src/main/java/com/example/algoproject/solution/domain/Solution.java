@@ -30,8 +30,10 @@ public class Solution {
     @JoinColumn(name = "problem_id")
     private Problem problem;
 
+    @Lob
     private String code;
 
+    @Lob
     private String readMe;
 
     private Timestamp date; //등록 날짜/시간
