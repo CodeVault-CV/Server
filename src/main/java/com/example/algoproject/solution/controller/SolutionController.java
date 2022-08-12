@@ -22,8 +22,8 @@ public class SolutionController {
     private final SolutionService solutionService;
 
     @Operation(summary="솔루션 업로드", description="code와 message 반환")
-    @PostMapping(value="/create", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE})
-    public CommonResponse solutionAdd(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @RequestPart AddSolution solution) throws IOException {
+    @PostMapping(value="/create")
+    public CommonResponse solutionAdd(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @RequestBody AddSolution solution) throws IOException {
         return solutionService.create(cudVO, solution);
     }
 
@@ -40,8 +40,8 @@ public class SolutionController {
     }
 
     @Operation(summary="솔루션 업데이트", description="code와 message 반환")
-    @PostMapping(value="/update/{solutionId}", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE})
-    public CommonResponse update(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @RequestPart(value="solution") UpdateSolution solution, @PathVariable("solutionId") Long solutionId) throws IOException {
+    @PostMapping(value="/update/{solutionId}")
+    public CommonResponse update(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @RequestBody UpdateSolution solution, @PathVariable("solutionId") Long solutionId) throws IOException {
         return solutionService.update(cudVO, solutionId, solution);
     }
 
