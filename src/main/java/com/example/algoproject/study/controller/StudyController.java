@@ -70,9 +70,15 @@ public class StudyController {
         return studyService.searchMember(cudVO, request);
     }
 
-    @Operation(summary = "Webhook의 payload를 받는 API (Client에서는 사용 X)")
-    @PostMapping("/webhook")
-    public void studyWebhook(@RequestBody Map<String, Object> response) {
-        studyService.webhook(response);
+    @Operation(summary = "Repository Webhook의 payload를 받는 API (Client에서는 사용 X)")
+    @PostMapping("/repository-webhook")
+    public void repositoryWebhook(@RequestBody Map<String, Object> response) {
+        studyService.repoWebhook(response);
+    }
+
+    @Operation(summary = "Member Webhook의 payload를 받는 API (Client에서는 사용 X)")
+    @PostMapping("/member-webhook")
+    public void memberWebhook(@RequestBody Map<String, Object> response) {
+        studyService.memberWebhook(response);
     }
 }

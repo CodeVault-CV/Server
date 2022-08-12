@@ -194,7 +194,8 @@ public class SolutionService {
         return responseService.getSuccessResponse();
     }
 
-    public void webhook(Map<String, Object> response) {
+    @Transactional
+    public void pushWebhook(Map<String, Object> response) {
 
         // solution
         if (response.containsKey("head_commit")) {
