@@ -21,15 +21,15 @@ public class SolutionController {
 
     private final SolutionService solutionService;
 
-    @Operation(summary="솔루션 업로드", description="code와 message 반환")
-    @PostMapping(value="/create")
+    @Operation(summary="솔루션 생성", description="code와 message 반환")
+    @PostMapping()
     public CommonResponse solutionAdd(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @RequestBody AddSolution solution) throws IOException {
         return solutionService.create(cudVO, solution);
     }
 
     @Operation(summary="솔루션 조회", description="제출한 솔루션 있으면 코드&리드미 파일 올라가 있는 s3 링크 반환. 없으면 null")
-    @GetMapping("/{solutionId}")
-    public CommonResponse solutionDetail(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @PathVariable("solutionId") Long solutionId) {
+    @GetMapping("/{id}")
+    public CommonResponse solutionDetail(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @PathVariable("id") Long solutionId) {
         return solutionService.detail(cudVO, solutionId);
     }
 
@@ -40,15 +40,15 @@ public class SolutionController {
     }
 
     @Operation(summary="솔루션 업데이트", description="code와 message 반환")
-    @PostMapping(value="/update/{solutionId}")
-    public CommonResponse update(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @RequestBody UpdateSolution solution, @PathVariable("solutionId") Long solutionId) throws IOException {
-        return solutionService.update(cudVO, solutionId, solution);
+    @PutMapping(value="/{id}")
+    public CommonResponse update(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @RequestBody UpdateSolution solution, @PathVariable("id") Long id) throws IOException {
+        return solutionService.update(cudVO, id, solution);
     }
 
     @Operation(summary="솔루션 삭제", description="등록한 솔루션을 삭제")
-    @DeleteMapping("/delete/{solutionId}")
-    public CommonResponse solutionRemove(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @PathVariable("solutionId") Long solutionId) {
-        return solutionService.delete(cudVO, solutionId);
+    @DeleteMapping("/{id}")
+    public CommonResponse solutionRemove(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @PathVariable("id") Long id) {
+        return solutionService.delete(cudVO, id);
     }
 
     @Operation(summary = "Push Webhook의 payload를 받는 API (Client에서는 사용 X)")
