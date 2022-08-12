@@ -30,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
@@ -51,6 +52,7 @@ public class SolutionService {
     private final ResponseService responseService;
     private final PathUtil pathUtil;
 
+    @Transactional
     public CommonResponse create(CustomUserDetailsVO cudVO, AddSolution addSolution) throws IOException {
 
         User user = userService.findById(cudVO.getUsername());
@@ -87,6 +89,7 @@ public class SolutionService {
         return responseService.getSuccessResponse();
     }
 
+    @Transactional(readOnly = true)
     public CommonResponse detail(CustomUserDetailsVO cudVO, Long solutionId) {
 
         User user = userService.findById(cudVO.getUsername());
@@ -100,6 +103,7 @@ public class SolutionService {
         return responseService.getSingleResponse(new SolutionInfo(solution.getCode(), solution.getReadMe(), solution.getDate(), solution.getReviews()));
     }
 
+    @Transactional(readOnly = true)
     public CommonResponse list(CustomUserDetailsVO cudVO, Long problemId) {
 
         User user = userService.findById(cudVO.getUsername());
@@ -127,6 +131,7 @@ public class SolutionService {
         return responseService.getListResponse(list);
     }
 
+    @Transactional
     public CommonResponse update(CustomUserDetailsVO cudVO, Long solutionId, UpdateSolution updateSolution) throws IOException {
 
         User user = userService.findById(cudVO.getUsername());
@@ -163,6 +168,7 @@ public class SolutionService {
         return responseService.getSuccessResponse();
     }
 
+    @Transactional
     public CommonResponse delete(CustomUserDetailsVO cudVO, Long solutionId) {
 
         User user = userService.findById(cudVO.getUsername());
@@ -217,10 +223,12 @@ public class SolutionService {
         }
     }
 
+    @Transactional(readOnly = true)
     public Solution findById(Long solutionId) {
         return solutionRepository.findById(solutionId).orElseThrow(NotExistSolutionException::new);
     }
 
+    @Transactional(readOnly = true)
     public Optional<Solution> findByPath(String path) {
         Optional<Solution> solutionCode = solutionRepository.findByCodePath(path);
         Optional<Solution> solutionReadMe = solutionRepository.findByReadMePath(path);

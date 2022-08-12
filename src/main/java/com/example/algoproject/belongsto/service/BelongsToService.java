@@ -23,12 +23,12 @@ public class BelongsToService {
         belongsToRepository.save(belongsTo);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public List<BelongsTo> findByStudy(Study study) {
         return belongsToRepository.findByStudy(study);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public List<BelongsTo> findByMember(User user) {
         return belongsToRepository.findByMember(user);
     }

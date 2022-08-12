@@ -63,17 +63,17 @@ public class UserService {
         return responseService.getSingleResponse(new LoginDto(jwtUtil.makeJWT(userInfoResponse.get("id").toString()), userInfoResponse.get("login").toString()));
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public User findById(String id) {
         return userRepository.findById(id).orElseThrow(NotExistUserException::new);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public User findByName(String name) {
         return userRepository.findByName(name).orElseThrow(NotExistUserException::new);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public List<User> findByNameContains(String name) {
         return userRepository.findByNameContains(name);
     }

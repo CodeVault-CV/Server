@@ -9,16 +9,14 @@ import com.example.algoproject.problem.dto.response.ProblemInfo;
 import com.example.algoproject.problem.repository.ProblemRepository;
 import com.example.algoproject.session.domain.Session;
 import com.example.algoproject.session.service.SessionService;
-import com.example.algoproject.study.domain.Study;
 import com.example.algoproject.study.service.StudyService;
-import com.example.algoproject.user.domain.User;
 import com.example.algoproject.user.dto.CustomUserDetailsVO;
 import com.example.algoproject.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,7 +47,7 @@ public class ProblemService {
         return responseService.getSingleResponse(new ProblemInfo(problem));
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public CommonResponse list(CustomUserDetailsVO cudVO, Long sessionId) {
 
         Session session = sessionService.findById(sessionId);
@@ -70,7 +68,7 @@ public class ProblemService {
         return responseService.getSuccessResponse();
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public Problem findById(Long id) {
         return problemRepository.findById(id).orElseThrow(NotExistProblemException::new);
     }

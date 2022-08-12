@@ -44,7 +44,7 @@ public class SessionService {
         return responseService.getSingleResponse(new SessionInfo(session));
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public CommonResponse list(CustomUserDetailsVO cudVO, String studyId) {
 
         User user = userService.findById(cudVO.getUsername());
@@ -56,7 +56,7 @@ public class SessionService {
         return responseService.getListResponse(getSessionInfos(sessionRepository.findByStudy(study)));
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public CommonResponse detail(CustomUserDetailsVO cudVO, Long id) {
         Session session = findById(id);
         User user = userService.findById(cudVO.getUsername());
@@ -96,7 +96,7 @@ public class SessionService {
         return responseService.getSuccessResponse();
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public Session findById(Long id) {
         return sessionRepository.findById(id).orElseThrow(NotExistSessionException::new);
     }
