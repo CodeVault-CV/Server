@@ -19,7 +19,7 @@ public class Solution {
 
     @Id
     @Column(name = "solution_id")
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue
     private Long id;
 
     @ManyToOne
