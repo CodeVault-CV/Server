@@ -1,6 +1,6 @@
 package com.example.algoproject.errors.exception.badrequest;
 
-public class AlreadyExistMemberException extends RuntimeException{
+public class AlreadyExistMemberException extends BadRequestException {
     private static final String MESSAGE = "이미 추가된 멤버 입니다";
     public AlreadyExistMemberException() {
         super(MESSAGE);

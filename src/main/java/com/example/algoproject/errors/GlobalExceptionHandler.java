@@ -2,10 +2,12 @@ package com.example.algoproject.errors;
 
 import com.example.algoproject.errors.exception.badrequest.AlreadyExistSolutionException;
 import com.example.algoproject.errors.exception.badrequest.*;
+import com.example.algoproject.errors.exception.forbidden.ForbiddenException;
 import com.example.algoproject.errors.exception.forbidden.NotLeaderUserException;
 import com.example.algoproject.errors.exception.forbidden.StudyAuthException;
 import com.example.algoproject.errors.exception.notfound.*;
 import com.example.algoproject.errors.exception.unauthorized.FailedResponseException;
+import com.example.algoproject.errors.exception.unauthorized.UnauthorizedException;
 import com.example.algoproject.errors.response.CommonResponse;
 import com.example.algoproject.errors.response.ResponseService;
 import lombok.RequiredArgsConstructor;
@@ -22,21 +24,17 @@ public class GlobalExceptionHandler {
 
     private final ResponseService responseService;
 
-    @ExceptionHandler({AlreadyExistMemberException.class, NotWriterUserException.class, NotMySolutionException.class,
-            AlreadyExistRepositoryNameException.class, SameNameException.class, SameUserException.class,
-            AlreadyExistSolutionException.class, NotMatchProblemAndSolutionException.class, AlreadyDeleteSolutionException.class})
+    @ExceptionHandler({BadRequestException.class})
     CommonResponse handleBadRequestException(Exception ex) {
         return handleBadRequest(ex);
     }
 
-    @ExceptionHandler({FailedResponseException.class})
+    @ExceptionHandler({UnauthorizedException.class})
     CommonResponse handleUnauthorizedException(Exception ex) {
         return handleUnauthorized(ex);
     }
 
-    @ExceptionHandler({NotExistUserException.class, NotExistStudyException.class, NotExistProblemException.class,
-            NotExistSolutionException.class, NotExistSessionException.class, NotExistRepositoryException.class,
-            NotExistMemberException.class, NotExistCommentException.class})
+    @ExceptionHandler({NotFoundException.class})
     CommonResponse handleNotFoundException(Exception ex) {
         return handleNotFound(ex);
     }
@@ -46,7 +44,7 @@ public class GlobalExceptionHandler {
         return handleMethodArgumentNotValid(ex);
     }
 
-    @ExceptionHandler({NotLeaderUserException.class, StudyAuthException.class})
+    @ExceptionHandler({ForbiddenException.class})
     public CommonResponse handleForbiddenException(Exception ex) {
         return handleForbidden(ex);
     }
@@ -58,17 +56,17 @@ public class GlobalExceptionHandler {
 
     private CommonResponse handleBadRequest (Exception ex) {
         log.info(ex.getMessage());
-        return responseService.getErrorResponse(HttpStatus.BAD_REQUEST.value(), ex.getMessage());
+        return responseService.getErrorResponse(BadRequestException.statusCode, ex.getMessage());
     }
 
     private CommonResponse handleUnauthorized(Exception ex) {
         log.info(ex.getMessage());
-        return responseService.getErrorResponse(HttpStatus.UNAUTHORIZED.value(), ex.getMessage());
+        return responseService.getErrorResponse(UnauthorizedException.statusCode, ex.getMessage());
     }
 
     private CommonResponse handleNotFound(Exception ex) {
         log.info(ex.getMessage());
-        return responseService.getErrorResponse(HttpStatus.NOT_FOUND.value(), ex.getMessage());
+        return responseService.getErrorResponse(NotFoundException.statusCode, ex.getMessage());
     }
 
     private CommonResponse handleMethodArgumentNotValid(MethodArgumentNotValidException ex) {
@@ -79,7 +77,7 @@ public class GlobalExceptionHandler {
 
     private CommonResponse handleForbidden(Exception ex) {
         log.info(ex.getMessage());
-        return responseService.getErrorResponse(HttpStatus.FORBIDDEN.value(), ex.getMessage());
+        return responseService.getErrorResponse(ForbiddenException.statusCode, ex.getMessage());
     }
 
     private CommonResponse handleInternalServerError (Exception ex) {
