@@ -86,7 +86,7 @@ public class JWTUtil {
                 log.info("JWT has expired.");
                 throw new NotValidateJWTException();
             }
-        } catch (SignatureException ex) { // JWT 일치 안함
+        } catch (UnsupportedJwtException | MalformedJwtException | SignatureException | IllegalArgumentException ex) { // JWT 일치 안함
             log.info("JWT do not match.");
             throw new NotValidateJWTException();
         }
