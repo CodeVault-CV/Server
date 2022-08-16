@@ -24,10 +24,13 @@ public class SolutionInfo {
 
     private List<Review> reviews;
 
-    public SolutionInfo(String code, String readMe, Timestamp date, List<Review> reviews) {
+    private String id;
+
+    public SolutionInfo(String code, String readMe, Timestamp date, List<Review> reviews, String id) {
         this.code = code;
         this.readMe = readMe;
         this.date = date;
         this.reviews = reviews;
+        this.id = id;
     }
 }

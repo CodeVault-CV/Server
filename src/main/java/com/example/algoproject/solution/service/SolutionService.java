@@ -16,6 +16,7 @@ import com.example.algoproject.solution.dto.request.AddSolution;
 import com.example.algoproject.solution.dto.request.CommitFileRequest;
 import com.example.algoproject.solution.dto.request.DeleteSolution;
 import com.example.algoproject.solution.dto.request.UpdateSolution;
+import com.example.algoproject.solution.dto.response.SolutionId;
 import com.example.algoproject.solution.dto.response.SolutionInfo;
 import com.example.algoproject.solution.dto.response.SolutionListInfo;
 import com.example.algoproject.solution.repository.SolutionRepository;
@@ -84,9 +85,9 @@ public class SolutionService {
         commitFileResponse(readMeSHA, leader, user, addSolution.getReadMe(), "README.md", path, study.getRepositoryName(), commitMessage);
 
         /* DB에 저장 */
-        solutionRepository.save(new Solution(user, problem, addSolution.getCode(), addSolution.getReadMe(), new Timestamp(date), addSolution.getLanguage(), codePath, readMePath));
+        Long id = solutionRepository.save(new Solution(user, problem, addSolution.getCode(), addSolution.getReadMe(), new Timestamp(date), addSolution.getLanguage(), codePath, readMePath)).getId();
 
-        return responseService.getSuccessResponse();
+        return responseService.getSingleResponse(new SolutionId(id));
     }
 
     @Transactional(readOnly = true)
@@ -100,7 +101,7 @@ public class SolutionService {
         // 유저가 스터디에 속한 멤버인지 확인
         studyService.checkAuth(user, study);
 
-        return responseService.getSingleResponse(new SolutionInfo(solution.getCode(), solution.getReadMe(), solution.getDate(), solution.getReviews()));
+        return responseService.getSingleResponse(new SolutionInfo(solution.getCode(), solution.getReadMe(), solution.getDate(), solution.getReviews(), user.getId()));
     }
 
     @Transactional(readOnly = true)
