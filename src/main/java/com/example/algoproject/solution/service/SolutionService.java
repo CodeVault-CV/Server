@@ -16,7 +16,7 @@ import com.example.algoproject.solution.dto.request.AddSolution;
 import com.example.algoproject.solution.dto.request.CommitFileRequest;
 import com.example.algoproject.solution.dto.request.DeleteSolution;
 import com.example.algoproject.solution.dto.request.UpdateSolution;
-import com.example.algoproject.solution.dto.response.SolutionId;
+import com.example.algoproject.solution.dto.response.SolutionDTO;
 import com.example.algoproject.solution.dto.response.SolutionInfo;
 import com.example.algoproject.solution.dto.response.SolutionListInfo;
 import com.example.algoproject.solution.repository.SolutionRepository;
@@ -69,6 +69,7 @@ public class SolutionService {
             throw new AlreadyExistSolutionException();
 
         long date = System.currentTimeMillis(); // 솔루션 등록한 시간 기록
+        Timestamp timestamp = new Timestamp(date);
         String path = pathUtil.makeGitHubPath(problem, user.getName());
         String fileName = problem.getNumber() + "." + mappedToExtension(addSolution.getLanguage()); // 문제 번호 + 프론트에서 주는 언어에 맞춰서 확장자 매핑해서 파일명 생성
         String codePath = path + fileName;
@@ -85,9 +86,9 @@ public class SolutionService {
         commitFileResponse(readMeSHA, leader, user, addSolution.getReadMe(), "README.md", path, study.getRepositoryName(), commitMessage);
 
         /* DB에 저장 */
-        Long id = solutionRepository.save(new Solution(user, problem, addSolution.getCode(), addSolution.getReadMe(), new Timestamp(date), addSolution.getLanguage(), codePath, readMePath)).getId();
+        Long id = solutionRepository.save(new Solution(user, problem, addSolution.getCode(), addSolution.getReadMe(), timestamp, addSolution.getLanguage(), codePath, readMePath)).getId();
 
-        return responseService.getSingleResponse(new SolutionId(id));
+        return responseService.getSingleResponse(new SolutionDTO(id, user.getId(), addSolution.getCode(), addSolution.getReadMe(), timestamp));
     }
 
     @Transactional(readOnly = true)
@@ -146,6 +147,8 @@ public class SolutionService {
         if (problem.getId() != solution.getProblem().getId()) // 요청한 solutionId가 속한 문제와 요청한 문제가 다른경우 확인
             throw new NotMatchProblemAndSolutionException();
 
+        long date = System.currentTimeMillis();
+        Timestamp timestamp = new Timestamp(date);
         String path = pathUtil.makeGitHubPath(solution.getProblem(), user.getName());
         String fileName = problem.getNumber() + "." + mappedToExtension(updateSolution.getLanguage()); // 파일명 생성
         String codePath = path + fileName;
@@ -159,14 +162,14 @@ public class SolutionService {
         commitFileResponse(codeSHA, leader, user, updateSolution.getCode(), fileName, path, study.getRepositoryName(), commitMessage);
         commitFileResponse(readMeSHA, leader, user, updateSolution.getReadMe(), "README.md", path, study.getRepositoryName(), commitMessage);
 
-        solution.setDate(new Timestamp(System.currentTimeMillis()));
+        solution.setDate(timestamp);
         solution.setCode(updateSolution.getCode());
         solution.setReadMe(updateSolution.getReadMe());
         solution.setLanguage(Language.valueOf(updateSolution.getLanguage()));
         solution.setCodePath(codePath);
         solutionRepository.save(solution);
 
-        return responseService.getSuccessResponse();
+        return responseService.getSingleResponse(new SolutionDTO(solutionId, user.getId(), updateSolution.getCode(), updateSolution.getReadMe(), timestamp));
     }
 
     @Transactional
