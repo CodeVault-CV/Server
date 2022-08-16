@@ -43,19 +43,8 @@ public class Problem {
     public Problem(AddProblem request) {
         this.number = request.getNumber();
         this.name = request.getName();
-        this.url = setUrl(request.getPlatform(), request.getNumber());
         this.platform = Platform.valueOf(request.getPlatform());
-    }
-
-    private String setUrl(String platform, String number) {
-        StringBuilder sb = new StringBuilder();
-
-        if (platform.equals("programmers"))
-            sb.append("https://programmers.co.kr/learn/courses/30/lessons/");
-        else
-            sb.append("https://www.acmicpc.net/problem/");
-
-        return sb.append(number).toString();
+        this.url = this.platform.getUrl() + request.getNumber();
     }
 
     public void setSession(Session session) {
