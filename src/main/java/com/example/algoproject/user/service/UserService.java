@@ -46,7 +46,7 @@ public class UserService {
                     userRepository.save(new User(userInfo.get("id").toString(), userInfo.get("login").toString(), token, userInfo.get("avatar_url").toString()));
                 });
 
-        return responseService.getSingleResponse(new LoginDto(jwtUtil.makeJWT(userInfo.get("id").toString()), userInfo.get("login").toString()));
+        return responseService.getSingleResponse(new LoginDto(jwtUtil.makeJWT(userInfo.get("id").toString()), userInfo.get("id").toString()));
     }
 
     @Transactional(readOnly = true)
