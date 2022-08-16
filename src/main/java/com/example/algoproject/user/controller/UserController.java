@@ -13,7 +13,7 @@ public class UserController {
 
     private final UserService userService;
 
-    @Operation(summary="로그인", description="code름(인증 코드)를 받아 token(JWT Token), name(사용자 이름)을 반환")
+    @Operation(summary="로그인", description="code름(인증 코드)를 받아 token(JWT Token), id(사용자 ID)을 반환")
     @GetMapping("/login")
     public CommonResponse login(@RequestParam String code){
         return userService.login(code);
