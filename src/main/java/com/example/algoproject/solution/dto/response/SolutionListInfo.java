@@ -16,6 +16,9 @@ public class SolutionListInfo {
     @Nullable
     private Long solutionId;
 
+    @NotNull
+    private String userId;
+
     @NotBlank
     private String name;
 
@@ -25,9 +28,10 @@ public class SolutionListInfo {
     @NotBlank
     private Language language; // solve가 flase면 blank(="") 반환
 
-    public SolutionListInfo(boolean solve, Long solutionId, String name, String imageUrl, String language) {
+    public SolutionListInfo(boolean solve, Long solutionId, String userId, String name, String imageUrl, String language) {
         this.solve = solve;
         this.solutionId = solutionId;
+        this.userId = userId;
         this.name = name;
         this.imageUrl = imageUrl;
         this.language = Language.valueOf(language);
