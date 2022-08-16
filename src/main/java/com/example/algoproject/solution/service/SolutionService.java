@@ -102,7 +102,7 @@ public class SolutionService {
         // 유저가 스터디에 속한 멤버인지 확인
         studyService.checkAuth(user, study);
 
-        return responseService.getSingleResponse(new SolutionInfo(solution.getCode(), solution.getReadMe(), solution.getDate(), solution.getReviews(), user.getId()));
+        return responseService.getSingleResponse(new SolutionInfo(solution.getCode(), solution.getReadMe(), solution.getDate(), solution.getReviews(), user.getId(), user.getName()));
     }
 
     @Transactional(readOnly = true)
@@ -119,7 +119,7 @@ public class SolutionService {
         studyService.checkAuth(user, study);
 
         for (User member: getMemberList(belongs)) { // 현재 스터디의 팀원들 중에서, probelmId를 푼 팀원은 언어와 풀이여부 true 반환. 안 풀었으면 false 반환.
-            SolutionListInfo info = new SolutionListInfo(false, null, member.getName(), member.getImageUrl(), "none");
+            SolutionListInfo info = new SolutionListInfo(false, null, member.getId(), member.getName(), member.getImageUrl(), "none");
 
             for (Solution solution: solutions) {
                 if (solution.getUser().equals(member)) {
