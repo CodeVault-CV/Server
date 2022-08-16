@@ -11,10 +11,10 @@ public class LoginDto {
     private String token;
 
     @NotBlank
-    private String name;
+    private String id;
 
-    public LoginDto(String token, String name) {
+    public LoginDto(String token, String id) {
         this.token = token;
-        this.name = name;
+        this.id = id;
     }
 }
