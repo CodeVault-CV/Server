@@ -1,5 +1,6 @@
 package com.example.algoproject.solution.dto.response;
 
+import com.example.algoproject.solution.domain.Language;
 import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
@@ -19,11 +20,14 @@ public class SolutionDTO {
 
     private Timestamp date;
 
-    public SolutionDTO(Long id, String user, String code, String readMe, Timestamp date) {
+    private Language language;
+
+    public SolutionDTO(Long id, String user, String code, String readMe, Timestamp date, String language) {
         this.id = id;
         this.user = user;
         this.code = code;
         this.readMe = readMe;
         this.date = date;
+        this.language = Language.valueOf(language);
     }
 }

@@ -23,6 +23,12 @@ public class ReviewController {
         return reviewService.create(cudVO, request);
     }
 
+    @Operation(summary = "리뷰 조회", description = "성공시 리뷰 list 반환")
+    @GetMapping("/{solutionId}")
+    public CommonResponse reviewList(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @PathVariable("solutionId") Long solutionId) {
+        return reviewService.list(cudVO, solutionId);
+    }
+
     @Operation(summary = "리뷰 수정", description = "성공시 메세지, 코드만 반환")
     @PutMapping()
     public CommonResponse reviewModify(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @RequestBody UpdateReview request) {

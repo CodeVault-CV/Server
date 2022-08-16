@@ -1,5 +1,6 @@
 package com.example.algoproject.review.service;
 
+import com.example.algoproject.errors.exception.notfound.NotExistSolutionException;
 import com.example.algoproject.problem.domain.Problem;
 import com.example.algoproject.review.domain.Review;
 import com.example.algoproject.review.dto.AddReview;
@@ -49,6 +50,20 @@ public class ReviewService {
         solutionService.save(solution);
 
         return responseService.getSuccessResponse();
+    }
+
+    @Transactional(readOnly = true)
+    public CommonResponse list(CustomUserDetailsVO cudVO, Long solutionId) {
+
+        User user = userService.findById(cudVO.getUsername());
+        Solution solution = solutionService.findById(solutionId);
+        Problem problem = solution.getProblem();
+        Study study = studyService.findById(problem.getSession().getStudy().getId());
+
+        // 유저가 스터디에 속한 멤버인지 확인
+        studyService.checkAuth(user, study);
+
+        return responseService.getListResponse(solution.getReviews());
     }
 
     @Transactional

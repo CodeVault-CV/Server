@@ -22,17 +22,14 @@ public class SolutionInfo {
     @NotBlank
     private Timestamp date; //등록 날짜/시간
 
-    private List<Review> reviews;
-
     private String id;
 
     private String name;
 
-    public SolutionInfo(String code, String readMe, Timestamp date, List<Review> reviews, String id, String name) {
+    public SolutionInfo(String code, String readMe, Timestamp date, String id, String name) {
         this.code = code;
         this.readMe = readMe;
         this.date = date;
-        this.reviews = reviews;
         this.id = id;
         this.name = name;
     }

@@ -88,7 +88,7 @@ public class SolutionService {
         /* DB에 저장 */
         Long id = solutionRepository.save(new Solution(user, problem, addSolution.getCode(), addSolution.getReadMe(), timestamp, addSolution.getLanguage(), codePath, readMePath)).getId();
 
-        return responseService.getSingleResponse(new SolutionDTO(id, user.getId(), addSolution.getCode(), addSolution.getReadMe(), timestamp));
+        return responseService.getSingleResponse(new SolutionDTO(id, user.getId(), addSolution.getCode(), addSolution.getReadMe(), timestamp, addSolution.getLanguage()));
     }
 
     @Transactional(readOnly = true)
@@ -102,7 +102,7 @@ public class SolutionService {
         // 유저가 스터디에 속한 멤버인지 확인
         studyService.checkAuth(user, study);
 
-        return responseService.getSingleResponse(new SolutionInfo(solution.getCode(), solution.getReadMe(), solution.getDate(), solution.getReviews(), user.getId(), user.getName()));
+        return responseService.getSingleResponse(new SolutionInfo(solution.getCode(), solution.getReadMe(), solution.getDate(), user.getId(), user.getName()));
     }
 
     @Transactional(readOnly = true)
@@ -169,7 +169,7 @@ public class SolutionService {
         solution.setCodePath(codePath);
         solutionRepository.save(solution);
 
-        return responseService.getSingleResponse(new SolutionDTO(solutionId, user.getId(), updateSolution.getCode(), updateSolution.getReadMe(), timestamp));
+        return responseService.getSingleResponse(new SolutionDTO(solutionId, user.getId(), updateSolution.getCode(), updateSolution.getReadMe(), timestamp, updateSolution.getLanguage()));
     }
 
     @Transactional
