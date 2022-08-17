@@ -102,7 +102,7 @@ public class SolutionService {
         // 유저가 스터디에 속한 멤버인지 확인
         studyService.checkAuth(user, study);
 
-        return responseService.getSingleResponse(new SolutionInfo(solution.getCode(), solution.getReadMe(), solution.getDate(), user.getId(), user.getName()));
+        return responseService.getSingleResponse(new SolutionInfo(solution.getCode(), solution.getReadMe(), solution.getLanguage(), solution.getDate(), user.getId(), user.getName()));
     }
 
     @Transactional(readOnly = true)
