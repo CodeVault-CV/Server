@@ -70,6 +70,12 @@ public class StudyController {
         return studyService.searchMember(cudVO, request);
     }
 
+    @Operation(summary = "요청한 사용자가 팀장인지 확인", description = "id(스터디 ID)를 받아 boolean 반환")
+    @GetMapping("/leader/{id}")
+    public CommonResponse leaderAuth(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @PathVariable String id) {
+        return studyService.authLeader(cudVO, id);
+    }
+
     @Operation(summary = "Repository Webhook의 payload를 받는 API (Client에서는 사용 X)")
     @PostMapping("/repository-webhook")
     public void repositoryWebhook(@RequestBody Map<String, Object> response) {
