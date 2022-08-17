@@ -190,6 +190,13 @@ public class StudyService {
         return responseService.getListResponse(findUserByNameContains(request.getName(), study));
     }
 
+    @Transactional(readOnly = true)
+    public CommonResponse authLeader(CustomUserDetailsVO cudVO, String id) {
+        User user = userService.findById(cudVO.getUsername());
+        Study study = findById(id);
+        return responseService.getSingleResponse(user.getId().equals(study.getLeaderId()));
+    }
+
     @Transactional
     public void repoWebhook(Map<String, Object> response) {
         // Webhook 이 왔을 때 경우(contributor, repository)를 분리하여 method 실행
