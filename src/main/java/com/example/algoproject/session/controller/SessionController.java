@@ -26,9 +26,9 @@ public class SessionController {
     }
 
     @Operation(summary = "세션 수정(팀장만 가능)", description = "변경된 세션의 이름, 시작 날짜, 끝 날짜를 받아 세션의 정보를 반환")
-    @PutMapping()
-    public CommonResponse sessionModify(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @Valid @RequestBody UpdateSession request) {
-        return sessionService.update(cudVO, request);
+    @PutMapping("/{id}")
+    public CommonResponse sessionModify(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @Valid @RequestBody UpdateSession request, @PathVariable Long id) {
+        return sessionService.update(cudVO, request, id);
     }
 
     @Operation(summary = "세션 목록", description = "스터디의 세션 정보 목록을 반환")

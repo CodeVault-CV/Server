@@ -66,9 +66,9 @@ public class StudyService {
     }
 
     @Transactional
-    public CommonResponse update(CustomUserDetailsVO cudVO, UpdateStudy request) {
+    public CommonResponse update(CustomUserDetailsVO cudVO, UpdateStudy request, String id) {
 
-        Study study = findById(request.getId());
+        Study study = findById(id);
 
         // 리더 유저인지 확인
         checkLeader(userService.findById(cudVO.getUsername()), study);

@@ -66,10 +66,10 @@ public class ReviewService {
     }
 
     @Transactional
-    public CommonResponse update(CustomUserDetailsVO cudVO, UpdateReview request) {
+    public CommonResponse update(CustomUserDetailsVO cudVO, UpdateReview request, Long id) {
 
         User user = userService.findById(cudVO.getUsername());
-        Review review = reviewRepository.findById(request.getId()).orElseThrow(NotExistCommentException::new);
+        Review review = findById(id);
 
         // 본인이 아닌 경우 글을 수정할 수 없음
         if(!review.getWriterId().equals(user.getId()))
@@ -83,9 +83,9 @@ public class ReviewService {
     }
 
     @Transactional
-    public CommonResponse delete(CustomUserDetailsVO cudVO, Long commentId) {
+    public CommonResponse delete(CustomUserDetailsVO cudVO, Long id) {
         User user = userService.findById(cudVO.getUsername());
-        Review review = reviewRepository.findById(commentId).orElseThrow(NotExistCommentException::new);
+        Review review = findById(id);
 
         // 본인이 아닌 경우 글을 삭제할 수 없음
         if(!review.getWriterId().equals(user.getId()))
@@ -94,5 +94,10 @@ public class ReviewService {
         reviewRepository.delete(review);
 
         return responseService.getSuccessResponse();
+    }
+
+    @Transactional
+    public Review findById(Long id) {
+        return reviewRepository.findById(id).orElseThrow(NotExistCommentException::new);
     }
 }

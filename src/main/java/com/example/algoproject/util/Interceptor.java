@@ -2,10 +2,8 @@ package com.example.algoproject.util;
 
 import com.example.algoproject.security.JWTUtil;
 import com.example.algoproject.study.service.StudyService;
-import com.example.algoproject.user.dto.CustomUserDetailsVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;

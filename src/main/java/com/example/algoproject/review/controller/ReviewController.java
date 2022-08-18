@@ -30,9 +30,9 @@ public class ReviewController {
     }
 
     @Operation(summary = "리뷰 수정", description = "성공시 메세지, 코드만 반환")
-    @PutMapping()
-    public CommonResponse reviewModify(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @RequestBody UpdateReview request) {
-        return reviewService.update(cudVO, request);
+    @PutMapping("/{id}")
+    public CommonResponse reviewModify(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @RequestBody UpdateReview request, @PathVariable Long id) {
+        return reviewService.update(cudVO, request, id);
     }
 
     @Operation(summary = "리뷰 삭제", description = "성공시 메세지, 코드만 반환")

@@ -69,8 +69,8 @@ public class SessionService {
     }
 
     @Transactional
-    public CommonResponse update(CustomUserDetailsVO cudVO, UpdateSession request) {
-        Session session = findById(request.getId());
+    public CommonResponse update(CustomUserDetailsVO cudVO, UpdateSession request, Long id) {
+        Session session = findById(id);
         User user = userService.findById(cudVO.getUsername());
         Study study = session.getStudy();
 

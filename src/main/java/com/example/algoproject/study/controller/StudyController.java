@@ -29,9 +29,9 @@ public class StudyController {
     }
 
     @Operation(summary = "스터디 수정(팀장만 가능)", description = "id(스터디 ID)와 name(새로 변경할 이름)을 받음")
-    @PutMapping()
-    public CommonResponse studyModify(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @RequestBody @Valid UpdateStudy request) {
-        return studyService.update(cudVO, request);
+    @PutMapping("/{id}")
+    public CommonResponse studyModify(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @RequestBody @Valid UpdateStudy request, @PathVariable String id) {
+        return studyService.update(cudVO, request, id);
     }
 
     @Operation(summary = "스터디 조회", description = "id(스터디 ID)를 받아 스터디의 정보를 반환(스터디 ID, 스터디 이름, 레포지토리 주소, 팀장의 ID, 멤버 목록)")
