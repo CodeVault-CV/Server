@@ -177,17 +177,17 @@ public class StudyService {
     }
 
     @Transactional(readOnly = true)
-    public CommonResponse searchMember(CustomUserDetailsVO cudVO, SearchUser request) {
+    public CommonResponse searchMember(CustomUserDetailsVO cudVO, String id, String name) {
 
-        log.info("search user name: {}", request.getName());
+        log.info("search user name: {}", name);
 
         User leader = userService.findById(cudVO.getUsername());
-        Study study = findById(request.getId());
+        Study study = findById(id);
 
         // 요청한 유저가 리더인지 확인
         checkLeader(leader, study);
 
-        return responseService.getListResponse(findUserByNameContains(request.getName(), study));
+        return responseService.getListResponse(findUserByNameContains(name, study));
     }
 
     @Transactional(readOnly = true)

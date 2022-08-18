@@ -3,7 +3,6 @@ package com.example.algoproject.study.controller;
 import com.example.algoproject.errors.response.*;
 import com.example.algoproject.study.dto.request.Member;
 import com.example.algoproject.study.dto.request.CreateStudy;
-import com.example.algoproject.study.dto.request.SearchUser;
 import com.example.algoproject.study.dto.request.UpdateStudy;
 import com.example.algoproject.study.service.StudyService;
 import com.example.algoproject.user.dto.CustomUserDetailsVO;
@@ -66,8 +65,8 @@ public class StudyController {
 
     @Operation(summary = "멤버 초대를 위한 유저 검색(팀장만 가능)", description = "name(검색할 유저의 이름)을 받아 해당 이름으로 검색된 유저정보 리스트 반환")
     @GetMapping("/member/list")
-    public CommonResponse memberSearch(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @RequestBody @Valid SearchUser request) {
-        return studyService.searchMember(cudVO, request);
+    public CommonResponse memberSearch(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @RequestParam String id, @RequestParam String name) {
+        return studyService.searchMember(cudVO, id, name);
     }
 
     @Operation(summary = "요청한 사용자가 팀장인지 확인", description = "id(스터디 ID)를 받아 boolean 반환")
