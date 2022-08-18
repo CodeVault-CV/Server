@@ -245,6 +245,18 @@ public class StudyService {
         return studyRepository.findById(id).orElseThrow(NotExistStudyException::new);
     }
 
+    @Transactional
+    public void validateLeader(String studyId, String userId) {
+        if (!userId.equals(findById(studyId).getLeaderId()))
+            throw new NotLeaderUserException();
+    }
+
+    @Transactional
+    public void validateMember(String studyId, String userId) {
+        if (getMembers(findById(studyId)).stream().noneMatch(user -> user.getId().equals(userId)))
+            throw new StudyAuthException();
+    }
+
     public void checkLeader(User user, Study study) {
         if(!Objects.equals(user.getId(), study.getLeaderId()))
             throw new NotLeaderUserException();

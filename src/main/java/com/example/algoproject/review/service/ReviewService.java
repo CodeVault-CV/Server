@@ -1,6 +1,5 @@
 package com.example.algoproject.review.service;
 
-import com.example.algoproject.errors.exception.notfound.NotExistSolutionException;
 import com.example.algoproject.problem.domain.Problem;
 import com.example.algoproject.review.domain.Review;
 import com.example.algoproject.review.dto.AddReview;
