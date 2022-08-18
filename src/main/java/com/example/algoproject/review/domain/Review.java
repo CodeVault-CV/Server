@@ -20,6 +20,8 @@ public class Review {
 
     private String writerId;
 
+    private String writerName;
+
     private String content;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm", timezone = "Asia/Seoul")
@@ -36,8 +38,9 @@ public class Review {
     @JoinColumn(name = "solution_id")
     private Solution solution;
 
-    public Review(String writerId, String content) {
+    public Review(String writerId, String writerName, String content) {
         this.writerId = writerId;
+        this.writerName = writerName;
         this.content = content;
     }
 

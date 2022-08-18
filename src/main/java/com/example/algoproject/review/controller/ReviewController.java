@@ -1,7 +1,7 @@
 package com.example.algoproject.review.controller;
 
-import com.example.algoproject.review.dto.AddReview;
-import com.example.algoproject.review.dto.UpdateReview;
+import com.example.algoproject.review.dto.request.AddReview;
+import com.example.algoproject.review.dto.request.UpdateReview;
 import com.example.algoproject.review.service.ReviewService;
 import com.example.algoproject.errors.response.CommonResponse;
 import com.example.algoproject.user.dto.CustomUserDetailsVO;
