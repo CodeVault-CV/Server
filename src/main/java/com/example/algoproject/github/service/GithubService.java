@@ -172,14 +172,14 @@ public class GithubService {
                 });
     }
 
-    public String checkFileResponse(User leader, User user, String fileName, String path, String repoName) {
+    public String checkFileResponse(User leader, User user, String path, String repoName) {
         HttpHeaders headers = makeHeader(user);
         RestTemplate restTemplate = new RestTemplate();
 
         HttpEntity entity = new HttpEntity<>(headers); // http entity에 header 담아줌
         try { // 깃허브에 파일 존재.
             ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
-                    "https://api.github.com/repos/" + leader.getName() + "/" + repoName + "/contents/" + path + fileName,
+                    "https://api.github.com/repos/" + leader.getName() + "/" + repoName + "/contents/" + path,
                     HttpMethod.GET,
                     entity,
                     new ParameterizedTypeReference<>() {
@@ -212,7 +212,7 @@ public class GithubService {
                 });
     }
 
-    public void deleteFileResponse(String sha, User leader, User user, String repoName, String path, String fileName, String commitMessage) {
+    public void deleteFileResponse(String sha, User leader, User user, String repoName, String path, String commitMessage) {
         HttpHeaders headers = makeHeader(user);
         DeleteSolution request = new DeleteSolution();
         request.setMessage(commitMessage);
@@ -224,7 +224,7 @@ public class GithubService {
 
         RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
-                "https://api.github.com/repos/" + leader.getName() + "/" + repoName + "/contents/" + path + fileName,
+                "https://api.github.com/repos/" + leader.getName() + "/" + repoName + "/contents/" + path,
                 HttpMethod.DELETE,
                 entity,
                 new ParameterizedTypeReference<>() {

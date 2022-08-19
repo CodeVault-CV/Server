@@ -66,23 +66,21 @@ public class SolutionService {
 
         long date = System.currentTimeMillis(); // 솔루션 등록한 시간 기록
         Timestamp timestamp = new Timestamp(date);
-        String path = pathUtil.makeGitHubPath(problem, user.getName());
+        String path = pathUtil.makeGithubPath(problem, user.getName()) + "/";
         String fileName = problem.getNumber() + "." + mappedToExtension(addSolution.getLanguage()); // 문제 번호 + 프론트에서 주는 언어에 맞춰서 확장자 매핑해서 파일명 생성
-        String codePath = path + fileName;
-        String readMePath = path + "README.md";
         String commitMessage = pathUtil.makeCommitMessage(problem, user.getName()); // 커밋메세지 만듦
 
         log.info("github repository path : " + path);
 
         /* github에 file commit */
-        String codeSHA = githubService.checkFileResponse(leader, user, fileName, path, study.getRepositoryName()); // code
-        String readMeSHA = githubService.checkFileResponse(leader, user, "README.md", path, study.getRepositoryName()); // readMe
+        String codeSHA = githubService.checkFileResponse(leader, user, path + fileName, study.getRepositoryName()); // code
+        String readMeSHA = githubService.checkFileResponse(leader, user, path + "README.md", study.getRepositoryName()); // readMe
 
         githubService.commitFileResponse(codeSHA, leader, user, addSolution.getCode(), fileName, path, study.getRepositoryName(), commitMessage);
         githubService.commitFileResponse(readMeSHA, leader, user, addSolution.getReadMe(), "README.md", path, study.getRepositoryName(), commitMessage);
 
         /* DB에 저장 */
-        Long id = solutionRepository.save(new Solution(user, problem, addSolution.getCode(), addSolution.getReadMe(), timestamp, addSolution.getLanguage(), codePath, readMePath)).getId();
+        Long id = solutionRepository.save(new Solution(user, problem, addSolution.getCode(), addSolution.getReadMe(), timestamp, addSolution.getLanguage(), path + fileName, path + "README.md")).getId();
 
         return responseService.getSingleResponse(new SolutionDTO(id, user.getId(), addSolution.getCode(), addSolution.getReadMe(), timestamp, addSolution.getLanguage()));
     }
@@ -145,24 +143,19 @@ public class SolutionService {
 
         long date = System.currentTimeMillis();
         Timestamp timestamp = new Timestamp(date);
-        String path = pathUtil.makeGitHubPath(solution.getProblem(), user.getName());
-        String fileName = problem.getNumber() + "." + mappedToExtension(updateSolution.getLanguage()); // 파일명 생성
-        String codePath = path + fileName;
         String commitMessage = pathUtil.makeCommitMessage(problem, user.getName()); // 커밋메세지 만듦
 
-
         /* github file commit */
-        String codeSHA = githubService.checkFileResponse(leader, user, fileName, path, study.getRepositoryName()); // code
-        String readMeSHA = githubService.checkFileResponse(leader, user, "README.md", path, study.getRepositoryName()); // readMe
+        String codeSHA = githubService.checkFileResponse(leader, user, solution.getCodePath(), study.getRepositoryName()); // code
+        String readMeSHA = githubService.checkFileResponse(leader, user, solution.getReadMePath(), study.getRepositoryName()); // readMe
 
-        githubService.commitFileResponse(codeSHA, leader, user, updateSolution.getCode(), fileName, path, study.getRepositoryName(), commitMessage);
-        githubService.commitFileResponse(readMeSHA, leader, user, updateSolution.getReadMe(), "README.md", path, study.getRepositoryName(), commitMessage);
+        githubService.commitFileResponse(codeSHA, leader, user, updateSolution.getCode(), "", solution.getCodePath(), study.getRepositoryName(), commitMessage);
+        githubService.commitFileResponse(readMeSHA, leader, user, updateSolution.getReadMe(), "", solution.getReadMePath(), study.getRepositoryName(), commitMessage);
 
         solution.setDate(timestamp);
         solution.setCode(updateSolution.getCode());
         solution.setReadMe(updateSolution.getReadMe());
         solution.setLanguage(Language.valueOf(updateSolution.getLanguage()));
-        solution.setCodePath(codePath);
         solutionRepository.save(solution);
 
         return responseService.getSingleResponse(new SolutionDTO(solutionId, user.getId(), updateSolution.getCode(), updateSolution.getReadMe(), timestamp, updateSolution.getLanguage()));
@@ -181,15 +174,14 @@ public class SolutionService {
 
         solutionRepository.delete(solution); // 솔루션 DB 삭제
 
-        String path = pathUtil.makeGitHubPath(solution.getProblem(), user.getName());
         String commitMessage = pathUtil.makeCommitMessage(problem, user.getName()); // 커밋메세지 만듦
-        String fileName = problem.getNumber() + "." + mappedToExtension(solution.getLanguage().name()); // 파일명 생성
 
-        String codeSHA = githubService.checkFileResponse(leader, user, fileName, path, study.getRepositoryName());
-        String readMeSHA = githubService.checkFileResponse(leader, user, "README.md", path, study.getRepositoryName());
+        String codeSHA = githubService.checkFileResponse(leader, user, solution.getCodePath(), study.getRepositoryName());
+        String readMeSHA = githubService.checkFileResponse(leader, user, solution.getReadMePath(), study.getRepositoryName());
+        log.info("solution delete: " + codeSHA);
         // 솔루션 github 삭제
-        githubService.deleteFileResponse(codeSHA, leader, user, study.getRepositoryName(), path, fileName, commitMessage);
-        githubService.deleteFileResponse(readMeSHA, leader, user, study.getRepositoryName(), path, "README.md", commitMessage);
+        githubService.deleteFileResponse(codeSHA, leader, user, study.getRepositoryName(), solution.getCodePath(), commitMessage);
+        githubService.deleteFileResponse(readMeSHA, leader, user, study.getRepositoryName(), solution.getReadMePath(), commitMessage);
 
         return responseService.getSuccessResponse();
     }
@@ -230,6 +222,11 @@ public class SolutionService {
     }
 
     @Transactional(readOnly = true)
+    public List<Solution> findByProblem(Problem problem) {
+        return solutionRepository.findByProblem(problem);
+    }
+
+    @Transactional(readOnly = true)
     public Optional<Solution> findByPath(String path) {
         Optional<Solution> solutionCode = solutionRepository.findByCodePath(path);
         Optional<Solution> solutionReadMe = solutionRepository.findByReadMePath(path);
@@ -252,8 +249,6 @@ public class SolutionService {
     /*
     private method
     */
-
-
 
     private List<User> getMemberList(List<BelongsTo> belongs) {
 

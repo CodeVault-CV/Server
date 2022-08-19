@@ -3,11 +3,15 @@ package com.example.algoproject.session.service;
 import com.example.algoproject.errors.exception.notfound.NotExistSessionException;
 import com.example.algoproject.errors.response.CommonResponse;
 import com.example.algoproject.errors.response.ResponseService;
+import com.example.algoproject.github.service.GithubService;
+import com.example.algoproject.problem.domain.Problem;
 import com.example.algoproject.session.domain.Session;
 import com.example.algoproject.session.dto.request.CreateSession;
 import com.example.algoproject.session.dto.request.UpdateSession;
 import com.example.algoproject.session.dto.response.SessionInfo;
 import com.example.algoproject.session.repository.SessionRepository;
+import com.example.algoproject.solution.domain.Solution;
+import com.example.algoproject.solution.dto.response.SolutionListInfo;
 import com.example.algoproject.study.domain.Study;
 import com.example.algoproject.study.service.StudyService;
 import com.example.algoproject.user.domain.User;
@@ -28,6 +32,8 @@ public class SessionService {
     private final ResponseService responseService;
     private final UserService userService;
     private final StudyService studyService;
+
+    private final GithubService githubService;
 
     @Transactional
     public CommonResponse create(CustomUserDetailsVO cudVO, CreateSession request) {
@@ -91,6 +97,17 @@ public class SessionService {
 
         // 유저가 팀장인지 확인
         studyService.checkLeader(user, study);
+
+        // 관련 솔루션 삭제
+        for (Problem problem: session.getProblems()) {
+            for (Solution solution: problem.getSolutions()) {
+                String codeSHA = githubService.checkFileResponse(user, user, solution.getCodePath(), study.getRepositoryName());
+                String readMeSHA = githubService.checkFileResponse(user, user, solution.getReadMePath(), study.getRepositoryName());
+
+                githubService.deleteFileResponse(codeSHA, user, user, study.getRepositoryName(), solution.getCodePath(), "delete");
+                githubService.deleteFileResponse(readMeSHA, user, user, study.getRepositoryName(), solution.getReadMePath(), "delete");
+            }
+        }
 
         sessionRepository.delete(session);
         return responseService.getSuccessResponse();
