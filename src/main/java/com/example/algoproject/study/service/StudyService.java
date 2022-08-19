@@ -159,13 +159,10 @@ public class StudyService {
     }
 
     @Transactional(readOnly = true)
-    public CommonResponse searchMember(SearchUser request) {
+    public CommonResponse searchMember(String id, String name) {
 
         log.info("search user name: {}", name);
-
-        Study study = findById(request.getId());
-
-        return responseService.getListResponse(findUserByNameContains(request.getName(), study));
+        return responseService.getListResponse(findUserByNameContains(name, findById(id)));
     }
 
     @Transactional(readOnly = true)

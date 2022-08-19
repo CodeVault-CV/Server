@@ -15,7 +15,6 @@ import com.example.algoproject.solution.domain.Language;
 import com.example.algoproject.solution.domain.Solution;
 import com.example.algoproject.solution.dto.request.AddSolution;
 import com.example.algoproject.solution.dto.request.UpdateSolution;
-import com.example.algoproject.solution.dto.response.SolutionDTO;
 import com.example.algoproject.solution.dto.response.SolutionInfo;
 import com.example.algoproject.solution.dto.response.SolutionListInfo;
 import com.example.algoproject.solution.repository.SolutionRepository;
@@ -154,14 +153,14 @@ public class SolutionService {
         solution.setCodePath(codePath);
         solutionRepository.save(solution);
 
-        return responseService.getSingleResponse(new SolutionDTO(solutionId, user.getId(), updateSolution.getCode(), updateSolution.getReadMe(), timestamp, updateSolution.getLanguage()));
+        return responseService.getSingleResponse(new SolutionInfo(solution, user));
     }
 
     @Transactional
-    public CommonResponse delete(CustomUserDetailsVO cudVO, Long solutionId) {
+    public CommonResponse delete(CustomUserDetailsVO cudVO, Long id) {
 
         User user = userService.findById(cudVO.getUsername());
-        Solution solution = solutionRepository.findById(solutionId).orElseThrow(NotExistSolutionException::new);
+        Solution solution = findById(id);
         Problem problem = solution.getProblem();
         Study study = studyService.findById(problem.getSession().getStudy().getId());
         User leader = userService.findById(study.getLeaderId());

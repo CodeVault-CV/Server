@@ -31,7 +31,7 @@ public class StudyController {
     }
 
     @Auth(role = LEADER)
-    @Operation(summary = "스터디 수정(팀장만 가능)", description = "id(스터디 ID)와 name(새로 변경할 이름)을 받음")
+    @Operation(summary = "스터디 수정(팀장만 가능)", description = "id(스터디 ID)와 name(새로 변경할 이름)을 받고 스터디의 정보를 반환")
     @PutMapping("/{id}")
     public CommonResponse studyModify(@AuthenticationPrincipal @RequestBody @Valid UpdateStudy request, @PathVariable String id) {
         return studyService.update(request, id);
@@ -74,8 +74,8 @@ public class StudyController {
     @Auth(role = LEADER)
     @Operation(summary = "멤버 초대를 위한 유저 검색(팀장만 가능)", description = "name(검색할 유저의 이름)을 받아 해당 이름으로 검색된 유저정보 리스트 반환")
     @GetMapping("/member/list")
-    public CommonResponse memberSearch(@AuthenticationPrincipal @RequestBody @Valid SearchUser request) {
-        return studyService.searchMember(request);
+    public CommonResponse memberSearch(@AuthenticationPrincipal @RequestParam String id, @RequestParam String name) {
+        return studyService.searchMember(id, name);
     }
 
     @Operation(summary = "요청한 사용자가 팀장인지 확인", description = "id(스터디 ID)를 받아 boolean 반환")
