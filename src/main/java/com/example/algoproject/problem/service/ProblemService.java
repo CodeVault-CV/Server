@@ -42,7 +42,6 @@ public class ProblemService {
 
         problem.setSession(session);
         session.addProblem(problem);
-        sessionService.save(session);
 
         return responseService.getSingleResponse(new ProblemInfo(problem));
     }
