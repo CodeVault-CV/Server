@@ -1,7 +1,6 @@
 package com.example.algoproject.review.controller;
 
 import com.example.algoproject.review.dto.request.AddReview;
-import com.example.algoproject.review.dto.request.DeleteReview;
 import com.example.algoproject.review.dto.request.UpdateReview;
 import com.example.algoproject.review.service.ReviewService;
 import com.example.algoproject.errors.response.CommonResponse;
@@ -31,7 +30,7 @@ public class ReviewController {
     @Auth(role = MEMBER)
     @Operation(summary = "리뷰 조회", description = "성공시 리뷰 list 반환")
     @GetMapping("/{solutionId}")
-    public CommonResponse reviewList(@AuthenticationPrincipal @PathVariable("solutionId") Long solutionId) {
+    public CommonResponse reviewList(@AuthenticationPrincipal @PathVariable Long solutionId) {
         return reviewService.list(solutionId);
     }
 
@@ -45,7 +44,7 @@ public class ReviewController {
     @Auth(role = MEMBER)
     @Operation(summary = "리뷰 삭제", description = "성공시 메세지, 코드만 반환")
     @DeleteMapping("/{id}")
-    public CommonResponse reviewRemove(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @RequestBody DeleteReview request, @PathVariable Long id) {
+    public CommonResponse reviewRemove(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @PathVariable Long id) {
         return reviewService.delete(cudVO, id);
     }
 }

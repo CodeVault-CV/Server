@@ -24,7 +24,7 @@ public class SolutionController {
     private final SolutionService solutionService;
 
     @Auth(role = MEMBER)
-    @Operation(summary="솔루션 생성", description="code와 message 반환")
+    @Operation(summary="솔루션 생성", description="문제ID, code, readme, language를 받아 생성하고 솔루션의 정보를 반환")
     @PostMapping()
     public CommonResponse solutionAdd(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @RequestBody AddSolution solution) throws IOException {
         return solutionService.create(cudVO, solution);
@@ -45,7 +45,7 @@ public class SolutionController {
     }
 
     @Auth(role = MEMBER)
-    @Operation(summary="솔루션 업데이트", description="code와 message 반환")
+    @Operation(summary="솔루션 업데이트", description="솔루션 수정 후 솔루션의 정보를 반환")
     @PutMapping(value="/{id}")
     public CommonResponse update(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @RequestBody UpdateSolution solution, @PathVariable("id") Long id) throws IOException {
         return solutionService.update(cudVO, id, solution);
