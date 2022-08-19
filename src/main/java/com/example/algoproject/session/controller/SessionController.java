@@ -53,7 +53,7 @@ public class SessionController {
     @Auth(role = LEADER)
     @Operation(summary = "세션 삭제(팀장만 가능)", description = "세션 ID를 받아 성공 여부만 반환")
     @DeleteMapping("/{id}")
-    public CommonResponse sessionRemove(@AuthenticationPrincipal @PathVariable Long id) {
-        return sessionService.delete(id);
+    public CommonResponse sessionRemove(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @PathVariable Long id) {
+        return sessionService.delete(cudVO, id);
     }
 }

@@ -38,7 +38,7 @@ public class ProblemController {
     @Auth(role = LEADER)
     @Operation(summary = "문제 삭제(팀장만 가능)", description = "문제 ID로 문제를 삭제후 성공 여부만 반환")
     @DeleteMapping("/{id}")
-    public CommonResponse problemRemove(@AuthenticationPrincipal @PathVariable Long id) {
-        return problemService.delete(id);
+    public CommonResponse problemRemove(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @PathVariable Long id) {
+        return problemService.delete(cudVO, id);
     }
 }

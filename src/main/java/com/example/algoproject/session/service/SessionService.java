@@ -14,6 +14,8 @@ import com.example.algoproject.solution.domain.Solution;
 import com.example.algoproject.solution.dto.response.SolutionListInfo;
 import com.example.algoproject.study.domain.Study;
 import com.example.algoproject.study.service.StudyService;
+import com.example.algoproject.user.domain.User;
+import com.example.algoproject.user.dto.CustomUserDetailsVO;
 import com.example.algoproject.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,6 +28,7 @@ import java.util.List;
 @Service
 public class SessionService {
 
+    private final UserService userService;
     private final SessionRepository sessionRepository;
     private final ResponseService responseService;
     private final StudyService studyService;
@@ -66,14 +69,11 @@ public class SessionService {
     }
 
     @Transactional
-    public CommonResponse delete(Long id) {
+    public CommonResponse delete(CustomUserDetailsVO cudVO, Long id) {
 
         Session session = findById(id);
         User user = userService.findById(cudVO.getUsername());
         Study study = session.getStudy();
-
-        // 유저가 팀장인지 확인
-        studyService.checkLeader(user, study);
 
         // 관련 솔루션 삭제
         for (Problem problem: session.getProblems()) {

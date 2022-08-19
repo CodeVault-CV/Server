@@ -76,7 +76,7 @@ public class SolutionService {
         githubService.commitFileResponse(readMeSHA, leader, user, addSolution.getReadMe(), "README.md", path, study.getRepositoryName(), commitMessage);
 
         /* DB에 저장 */
-        Solution solution = new Solution(user, problem, addSolution.getCode(), addSolution.getReadMe(), timestamp, addSolution.getLanguage(), codePath, readMePath);
+        Solution solution = new Solution(user, problem, addSolution.getCode(), addSolution.getReadMe(), timestamp, addSolution.getLanguage(), path + fileName, path + "README.md");
         solutionRepository.save(solution);
 
         return responseService.getSingleResponse(new SolutionInfo(solution, user));

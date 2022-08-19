@@ -16,7 +16,6 @@ import com.example.algoproject.study.service.StudyService;
 import com.example.algoproject.user.domain.User;
 import com.example.algoproject.user.dto.CustomUserDetailsVO;
 import com.example.algoproject.user.service.UserService;
-import com.example.algoproject.util.PathUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -37,8 +36,6 @@ public class ProblemService {
     private final StudyService studyService;
     private final GithubService githubService;
 
-    private final PathUtil pathUtil;
-
     @Transactional
     public CommonResponse create(AddProblem request) {
 
@@ -47,6 +44,7 @@ public class ProblemService {
 
         problem.setSession(session);
         session.addProblem(problem);
+        problemRepository.save(problem);
 
         return responseService.getSingleResponse(new ProblemInfo(problem));
     }
@@ -63,9 +61,6 @@ public class ProblemService {
         User user = userService.findById(cudVO.getUsername());
         Problem problem = findById(id);
         Study study = studyService.findById(problem.getSession().getStudy().getId());
-
-        // 유저가 팀장인지 확인
-        studyService.checkLeader(user, findById(id).getSession().getStudy());
 
         // 관련 솔루션 삭제
         for (Solution solution: problem.getSolutions()) {
