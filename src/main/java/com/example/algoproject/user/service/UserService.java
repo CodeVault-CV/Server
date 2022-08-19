@@ -49,6 +49,8 @@ public class UserService {
         return responseService.getSingleResponse(new LoginDto(jwtUtil.makeJWT(userInfo.get("id").toString()), userInfo.get("id").toString()));
     }
 
+
+
     @Transactional(readOnly = true)
     public User findById(String id) {
         return userRepository.findById(id).orElseThrow(NotExistUserException::new);

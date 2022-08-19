@@ -18,7 +18,9 @@ public class Review {
     @GeneratedValue
     private Long id;
 
-    private String writerId;
+    private String userId;
+
+    private String userName;
 
     private String content;
 
@@ -36,8 +38,9 @@ public class Review {
     @JoinColumn(name = "solution_id")
     private Solution solution;
 
-    public Review(String writerId, String content) {
-        this.writerId = writerId;
+    public Review(String userId, String userName, String content) {
+        this.userId = userId;
+        this.userName = userName;
         this.content = content;
     }
 
