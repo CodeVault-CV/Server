@@ -62,9 +62,6 @@ public class SolutionService {
         User leader = userService.findById(study.getLeaderId());
         Optional<Solution> alreadyExist = solutionRepository.findByProblemAndUser(problem, user);
 
-        // 유저가 스터디에 속한 멤버인지 확인
-        studyService.checkAuth(user, study);
-
         if (alreadyExist.isPresent()) // 이미 현재유저가 해당 문제에 솔루션 등록했는지 확인
             throw new AlreadyExistSolutionException();
 
@@ -86,44 +83,35 @@ public class SolutionService {
         commitFileResponse(readMeSHA, leader, user, addSolution.getReadMe(), "README.md", path, study.getRepositoryName(), commitMessage);
 
         /* DB에 저장 */
-        Long id = solutionRepository.save(new Solution(user, problem, addSolution.getCode(), addSolution.getReadMe(), timestamp, addSolution.getLanguage(), codePath, readMePath)).getId();
+        Solution solution = new Solution(user, problem, addSolution.getCode(), addSolution.getReadMe(), timestamp, addSolution.getLanguage(), codePath, readMePath);
+        solutionRepository.save(solution);
 
-        return responseService.getSingleResponse(new SolutionDTO(id, user.getId(), addSolution.getCode(), addSolution.getReadMe(), timestamp, addSolution.getLanguage()));
+        return responseService.getSingleResponse(new SolutionInfo(solution, user));
     }
 
     @Transactional(readOnly = true)
-    public CommonResponse detail(CustomUserDetailsVO cudVO, Long solutionId) {
+    public CommonResponse detail(CustomUserDetailsVO cudVO, Long id) {
 
         User user = userService.findById(cudVO.getUsername());
-        Solution solution = solutionRepository.findById(solutionId).orElseThrow(NotExistSolutionException::new);
-        Problem problem = solution.getProblem();
-        Study study = studyService.findById(problem.getSession().getStudy().getId());
+        Solution solution = findById(id);
 
-        // 유저가 스터디에 속한 멤버인지 확인
-        studyService.checkAuth(user, study);
-
-        return responseService.getSingleResponse(new SolutionInfo(solution.getCode(), solution.getReadMe(), solution.getDate(), user.getId(), user.getName()));
+        return responseService.getSingleResponse(new SolutionInfo(solution, user));
     }
 
     @Transactional(readOnly = true)
-    public CommonResponse list(CustomUserDetailsVO cudVO, Long problemId) {
-
-        User user = userService.findById(cudVO.getUsername());
+    public CommonResponse list(Long problemId) {
         Problem problem = problemService.findById(problemId);
         Study study = studyService.findById(problem.getSession().getStudy().getId());
         List<BelongsTo> belongs =  belongsToService.findByStudy(study);
         List<Solution> solutions = solutionRepository.findByProblem(problem);
         List<SolutionListInfo> list = new ArrayList<>();
 
-        // 유저가 스터디에 속한 멤버인지 확인
-        studyService.checkAuth(user, study);
-
         for (User member: getMemberList(belongs)) { // 현재 스터디의 팀원들 중에서, probelmId를 푼 팀원은 언어와 풀이여부 true 반환. 안 풀었으면 false 반환.
             SolutionListInfo info = new SolutionListInfo(false, null, member.getId(), member.getName(), member.getImageUrl(), "none");
 
             for (Solution solution: solutions) {
                 if (solution.getUser().equals(member)) {
-                    info.setSolutionId(solution.getId());
+                    info.setId(solution.getId());
                     info.setLanguage(solution.getLanguage());
                     info.setSolve(true);
                 }

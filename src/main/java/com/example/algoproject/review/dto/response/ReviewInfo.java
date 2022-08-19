@@ -13,10 +13,10 @@ public class ReviewInfo {
     private Long id;
 
     @NotNull
-    private String writerId;
+    private String userId;
 
     @NotNull
-    private String writerName;
+    private String userName;
 
     @NotNull
     private String content;
@@ -29,8 +29,8 @@ public class ReviewInfo {
 
     public ReviewInfo(Review review) {
         this.id = review.getId();
-        this.writerId = review.getWriterId();
-        this.writerName = review.getWriterName();
+        this.userId = review.getUserId();
+        this.userName = review.getUserName();
         this.content = review.getContent();
         this.createdTime = review.getCreatedTime();
         this.updatedTime = review.getUpdatedTime();

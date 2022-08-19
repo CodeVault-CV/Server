@@ -1,15 +1,19 @@
 package com.example.algoproject.solution.dto.response;
 
-import com.example.algoproject.review.domain.Review;
+import com.example.algoproject.solution.domain.Solution;
+import com.example.algoproject.user.domain.User;
 import lombok.Data;
 
 import javax.persistence.Lob;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.sql.Timestamp;
-import java.util.List;
 
 @Data
 public class SolutionInfo {
+
+    @NotNull
+    private Long id;
 
     @NotBlank
     @Lob
@@ -22,15 +26,16 @@ public class SolutionInfo {
     @NotBlank
     private Timestamp date; //등록 날짜/시간
 
-    private String id;
+    private String userId;
 
-    private String name;
+    private String userName;
 
-    public SolutionInfo(String code, String readMe, Timestamp date, String id, String name) {
-        this.code = code;
-        this.readMe = readMe;
-        this.date = date;
-        this.id = id;
-        this.name = name;
+    public SolutionInfo(Solution solution, User user) {
+        this.id = solution.getId();
+        this.code = solution.getCode();
+        this.readMe = solution.getReadMe();
+        this.date = solution.getDate();
+        this.userId = user.getId();
+        this.userName = user.getName();
     }
 }

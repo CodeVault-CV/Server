@@ -12,6 +12,8 @@ import org.springframework.web.servlet.ModelAndView;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import static com.example.algoproject.util.Auth.Role.*;
+
 @Log4j2
 @RequiredArgsConstructor
 @Component
@@ -35,15 +37,11 @@ public class Interceptor implements HandlerInterceptor {
         String userId = jwtUtil.getJWTId(jwtUtil.resolveToken(request));
         String studyId = request.getHeader("Study");
 
-        if (auth.role().equals(Auth.Role.LEADER))
+        if (auth.role().equals(LEADER))
             studyService.validateLeader(studyId, userId);
 
-        if (auth.role().equals(Auth.Role.MEMBER))
+        if (auth.role().equals(MEMBER))
             studyService.validateMember(studyId, userId);
-
-        if (auth.role().equals(Auth.Role.OWN)) {
-
-        }
 
         return HandlerInterceptor.super.preHandle(request, response, handler);
     }

@@ -38,35 +38,18 @@ public class ReviewService {
     public CommonResponse create(CustomUserDetailsVO cudVO, AddReview request) {
         User user = userService.findById(cudVO.getUsername());
         Solution solution = solutionService.findById(request.getSolutionId());
-        Problem problem = solution.getProblem();
-        Study study = studyService.findById(problem.getSession().getStudy().getId());
-
-        // 유저가 스터디에 속한 멤버인지 확인
-        studyService.checkAuth(user, study);
 
         Review review = new Review(user.getId(), user.getName(), request.getContent());
-
         reviewRepository.save(review);
-
         solution.addReview(review);
-
         solutionService.save(solution);
 
         return responseService.getSingleResponse(new ReviewInfo(review));
     }
 
     @Transactional(readOnly = true)
-    public CommonResponse list(CustomUserDetailsVO cudVO, Long solutionId) {
-
-        User user = userService.findById(cudVO.getUsername());
-        Solution solution = solutionService.findById(solutionId);
-        Problem problem = solution.getProblem();
-        Study study = studyService.findById(problem.getSession().getStudy().getId());
-
-        // 유저가 스터디에 속한 멤버인지 확인
-        studyService.checkAuth(user, study);
-
-        return responseService.getListResponse(getReviewInfos(solution));
+    public CommonResponse list(Long solutionId) {
+        return responseService.getListResponse(getReviewInfos(solutionService.findById(solutionId)));
     }
 
     @Transactional
@@ -76,7 +59,7 @@ public class ReviewService {
         Review review = findById(id);
 
         // 본인이 아닌 경우 글을 수정할 수 없음
-        if (!review.getWriterId().equals(user.getId()))
+        if (!review.getUserId().equals(user.getId()))
             throw new NotWriterUserException();
 
         review.setContent(request.getContent());
@@ -92,7 +75,7 @@ public class ReviewService {
         Review review = findById(id);
 
         // 본인이 아닌 경우 글을 삭제할 수 없음
-        if (!review.getWriterId().equals(user.getId()))
+        if (!review.getUserId().equals(user.getId()))
             throw new NotWriterUserException();
 
         reviewRepository.delete(review);

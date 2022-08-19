@@ -15,6 +15,5 @@ public @interface Auth {
         USER, // 일반 사용자
         LEADER, // 스터디의 팀장
         MEMBER, // 스터디에 속한 멤버
-        OWN // 본인
     }
 }

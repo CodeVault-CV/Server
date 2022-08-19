@@ -14,13 +14,13 @@ public class SolutionListInfo {
     private boolean solve; // false: 안품, true: 품
 
     @Nullable
-    private Long solutionId;
+    private Long id;
 
     @NotNull
     private String userId;
 
     @NotBlank
-    private String name;
+    private String userName;
 
     @NotBlank
     private String imageUrl;
@@ -28,11 +28,11 @@ public class SolutionListInfo {
     @NotBlank
     private Language language; // solve가 flase면 blank(="") 반환
 
-    public SolutionListInfo(boolean solve, Long solutionId, String userId, String name, String imageUrl, String language) {
+    public SolutionListInfo(boolean solve, Long id, String userId, String userName, String imageUrl, String language) {
         this.solve = solve;
-        this.solutionId = solutionId;
+        this.id = id;
         this.userId = userId;
-        this.name = name;
+        this.userName = userName;
         this.imageUrl = imageUrl;
         this.language = Language.valueOf(language);
     }
