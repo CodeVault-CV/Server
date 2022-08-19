@@ -40,13 +40,10 @@ public class ProblemService {
     private final PathUtil pathUtil;
 
     @Transactional
-    public CommonResponse create(CustomUserDetailsVO cudVO, AddProblem request) {
+    public CommonResponse create(AddProblem request) {
 
         Session session = sessionService.findById(request.getSessionId());
         Problem problem = new Problem(request);
-
-        // 유저가 팀장인지 확인
-        studyService.checkLeader(userService.findById(cudVO.getUsername()), session.getStudy());
 
         problem.setSession(session);
         session.addProblem(problem);
@@ -55,14 +52,9 @@ public class ProblemService {
     }
 
     @Transactional(readOnly = true)
-    public CommonResponse list(CustomUserDetailsVO cudVO, Long sessionId) {
-
-        Session session = sessionService.findById(sessionId);
-
-        // 유저가 해당 스터디에 소속되어 있는지 확인
-        studyService.checkAuth(userService.findById(cudVO.getUsername()), session.getStudy());
-
-        return responseService.getListResponse(getProblemInfos(problemRepository.findBySession(session)));
+    public CommonResponse list(Long sessionId) {
+        return responseService.getListResponse(getProblemInfos(
+                problemRepository.findBySession(sessionService.findById(sessionId))));
     }
 
     @Transactional

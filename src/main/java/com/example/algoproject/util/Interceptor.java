@@ -1,19 +1,48 @@
 package com.example.algoproject.util;
 
+import com.example.algoproject.security.JWTUtil;
+import com.example.algoproject.study.service.StudyService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Component;
+import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import static com.example.algoproject.util.Auth.Role.*;
+
 @Log4j2
+@RequiredArgsConstructor
 @Component
 public class Interceptor implements HandlerInterceptor {
+
+    private final JWTUtil jwtUtil;
+    private final StudyService studyService;
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        log.info("url : {}", request.getRequestURI());
+        log.info("url : {}", request.getRequestURI() + " " + request.getMethod());
+
+        if (!(handler instanceof HandlerMethod))
+            return true;
+
+        HandlerMethod handlerMethod = (HandlerMethod) handler;
+
+        Auth auth = handlerMethod.getMethodAnnotation(Auth.class);
+        if (auth == null)
+            return true;
+
+        String userId = jwtUtil.getJWTId(jwtUtil.resolveToken(request));
+        String studyId = request.getHeader("Study");
+
+        if (auth.role().equals(LEADER))
+            studyService.validateLeader(studyId, userId);
+
+        if (auth.role().equals(MEMBER))
+            studyService.validateMember(studyId, userId);
+
         return HandlerInterceptor.super.preHandle(request, response, handler);
     }
 

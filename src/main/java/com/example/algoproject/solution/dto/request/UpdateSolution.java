@@ -12,6 +12,9 @@ public class UpdateSolution {
     private Long problemId;
 
     @NotNull
+    private String userId;
+
+    @NotNull
     @Lob
     private String code;
 

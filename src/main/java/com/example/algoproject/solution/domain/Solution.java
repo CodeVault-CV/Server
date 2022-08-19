@@ -22,14 +22,6 @@ public class Solution {
     @GeneratedValue
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id")
-    private User user;
-
-    @ManyToOne
-    @JoinColumn(name = "problem_id")
-    private Problem problem;
-
     @Lob
     private String code;
 
@@ -43,6 +35,14 @@ public class Solution {
     private String codePath; // 깃허브의 코드 path
 
     private String readMePath; // 깃허브의 리드미 path
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    @ManyToOne
+    @JoinColumn(name = "problem_id")
+    private Problem problem;
 
     @OneToMany(
             mappedBy = "solution",

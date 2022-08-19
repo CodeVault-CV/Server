@@ -9,9 +9,6 @@ import java.util.Date;
 @Data
 public class UpdateSession {
 
-    @NotNull(message = "세션 ID는 필수 입력값입니다")
-    private Long id;
-
     @NotNull(message = "세션 이름은 필수 입력값입니다")
     private String name;
 

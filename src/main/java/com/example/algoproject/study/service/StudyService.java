@@ -29,7 +29,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -66,12 +65,9 @@ public class StudyService {
     }
 
     @Transactional
-    public CommonResponse update(CustomUserDetailsVO cudVO, UpdateStudy request) {
+    public CommonResponse update(UpdateStudy request, String id) {
 
-        Study study = findById(request.getId());
-
-        // 리더 유저인지 확인
-        checkLeader(userService.findById(cudVO.getUsername()), study);
+        Study study = findById(id);
 
         // 스터디의 이름이 이전과 같음
         if (study.getName().equals(request.getName()))
@@ -85,14 +81,9 @@ public class StudyService {
     }
 
     @Transactional(readOnly = true)
-    public CommonResponse detail(CustomUserDetailsVO cudVO, String id) {
-
-        User user = userService.findById(cudVO.getUsername());
+    public CommonResponse detail(String id) {
         Study study = findById(id);
         List<User> members = getMembers(study);
-
-        // 해당 스터디에 속한 사람인지 확인
-        checkAuth(user, study);
 
         return responseService.getSingleResponse(new StudyInfo(study, getMemberInfos(members)));
     }
@@ -107,9 +98,6 @@ public class StudyService {
 
         User user = userService.findById(cudVO.getUsername());
         Study study = findById(id);
-
-        // 리더 유저인지 확인
-        checkLeader(user, study);
 
         // github API 로 저장소 삭제 요청
         githubService.deleteRepository(user, study);
@@ -131,9 +119,6 @@ public class StudyService {
         log.info("leader name: " + leader.getName());
         log.info("member name: " + member.getName());
         log.info("study name: " + study.getName());
-
-        // 리더 유저인지 확인
-        checkLeader(leader, study);
 
         // 자기 자신을 초대할 수 없음
         checkSame(leader, member);
@@ -161,9 +146,6 @@ public class StudyService {
         log.info("member name: " + member.getName());
         log.info("study name: " + study.getName());
 
-        // 요청한 유저가 리더인지 확인
-        checkLeader(leader, study);
-
         // 자기 자신을 삭제할 수 없음
         checkSame(leader, member);
 
@@ -177,17 +159,10 @@ public class StudyService {
     }
 
     @Transactional(readOnly = true)
-    public CommonResponse searchMember(CustomUserDetailsVO cudVO, String id, String name) {
+    public CommonResponse searchMember(String id, String name) {
 
         log.info("search user name: {}", name);
-
-        User leader = userService.findById(cudVO.getUsername());
-        Study study = findById(id);
-
-        // 요청한 유저가 리더인지 확인
-        checkLeader(leader, study);
-
-        return responseService.getListResponse(findUserByNameContains(name, study));
+        return responseService.getListResponse(findUserByNameContains(name, findById(id)));
     }
 
     @Transactional(readOnly = true)
@@ -245,13 +220,15 @@ public class StudyService {
         return studyRepository.findById(id).orElseThrow(NotExistStudyException::new);
     }
 
-    public void checkLeader(User user, Study study) {
-        if(!Objects.equals(user.getId(), study.getLeaderId()))
+    @Transactional
+    public void validateLeader(String studyId, String userId) {
+        if (!userId.equals(findById(studyId).getLeaderId()))
             throw new NotLeaderUserException();
     }
 
-    public void checkAuth(User user, Study study) {
-        if (!getMembers(study).contains(user))
+    @Transactional
+    public void validateMember(String studyId, String userId) {
+        if (getMembers(findById(studyId)).stream().noneMatch(user -> user.getId().equals(userId)))
             throw new StudyAuthException();
     }
 
