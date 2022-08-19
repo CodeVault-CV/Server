@@ -34,8 +34,6 @@ public class ProblemService {
 
         problem.setSession(session);
         session.addProblem(problem);
-        sessionService.save(session);
-        problemRepository.save(problem);
 
         return responseService.getSingleResponse(new ProblemInfo(problem));
     }

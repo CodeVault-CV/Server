@@ -2,6 +2,7 @@ package com.example.algoproject.solution.dto.response;
 
 import com.example.algoproject.solution.domain.Solution;
 import com.example.algoproject.user.domain.User;
+import com.example.algoproject.solution.domain.Language;
 import lombok.Data;
 
 import javax.persistence.Lob;
@@ -23,6 +24,8 @@ public class SolutionInfo {
     @Lob
     private String readMe;
 
+    private Language language;
+
     @NotBlank
     private Timestamp date; //등록 날짜/시간
 
@@ -35,7 +38,9 @@ public class SolutionInfo {
         this.code = solution.getCode();
         this.readMe = solution.getReadMe();
         this.date = solution.getDate();
+        this.language = solution.getLanguage();
         this.userId = user.getId();
         this.userName = user.getName();
+
     }
 }

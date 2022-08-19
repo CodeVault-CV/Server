@@ -3,7 +3,6 @@ package com.example.algoproject.study.controller;
 import com.example.algoproject.errors.response.*;
 import com.example.algoproject.study.dto.request.Member;
 import com.example.algoproject.study.dto.request.CreateStudy;
-import com.example.algoproject.study.dto.request.SearchUser;
 import com.example.algoproject.study.dto.request.UpdateStudy;
 import com.example.algoproject.study.service.StudyService;
 import com.example.algoproject.user.dto.CustomUserDetailsVO;

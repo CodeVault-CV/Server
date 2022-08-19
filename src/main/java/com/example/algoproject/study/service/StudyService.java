@@ -161,7 +161,7 @@ public class StudyService {
     @Transactional(readOnly = true)
     public CommonResponse searchMember(SearchUser request) {
 
-        log.info("search user name: {}", request.getName());
+        log.info("search user name: {}", name);
 
         Study study = findById(request.getId());
 
