@@ -85,13 +85,9 @@ public class SolutionService {
     }
 
     @Transactional(readOnly = true)
-    public CommonResponse detail(CustomUserDetailsVO cudVO, Long id) {
-
-        User user = userService.findById(cudVO.getUsername());
+    public CommonResponse detail(Long id) {
         Solution solution = findById(id);
-
-
-        return responseService.getSingleResponse(new SolutionInfo(solution, user));
+        return responseService.getSingleResponse(new SolutionInfo(solution, solution.getUser()));
     }
 
     @Transactional(readOnly = true)

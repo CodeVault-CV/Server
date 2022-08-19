@@ -33,8 +33,8 @@ public class SolutionController {
     @Auth(role = MEMBER)
     @Operation(summary="솔루션 조회", description="제출한 솔루션 있으면 코드&리드미 파일 올라가 있는 s3 링크 반환. 없으면 null")
     @GetMapping("/{id}")
-    public CommonResponse solutionDetail(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @PathVariable("id") Long id) {
-        return solutionService.detail(cudVO, id);
+    public CommonResponse solutionDetail(@AuthenticationPrincipal @PathVariable("id") Long id) {
+        return solutionService.detail(id);
     }
 
     @Auth(role = MEMBER)
