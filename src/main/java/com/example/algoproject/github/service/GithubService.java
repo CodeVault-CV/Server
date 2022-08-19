@@ -5,6 +5,8 @@ import com.example.algoproject.errors.exception.badrequest.AlreadyExistRepositor
 import com.example.algoproject.errors.exception.notfound.NotExistRepositoryException;
 import com.example.algoproject.errors.exception.unauthorized.FailedResponseException;
 import com.example.algoproject.github.dto.request.CreateWebhook;
+import com.example.algoproject.solution.dto.request.CommitFileRequest;
+import com.example.algoproject.solution.dto.request.DeleteSolution;
 import com.example.algoproject.study.domain.Study;
 import com.example.algoproject.study.dto.request.AddContributor;
 import com.example.algoproject.study.dto.request.CreateRepository;
@@ -19,8 +21,11 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.IOException;
+import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -161,6 +166,65 @@ public class GithubService {
 
         restTemplate.exchange(
                 "https://api.github.com/repos/" + leader.getName() + "/" + study.getRepositoryName() + "/collaborators/" + member.getName(),
+                HttpMethod.DELETE,
+                entity,
+                new ParameterizedTypeReference<>() {
+                });
+    }
+
+    public String checkFileResponse(User leader, User user, String fileName, String path, String repoName) {
+        HttpHeaders headers = makeHeader(user);
+        RestTemplate restTemplate = new RestTemplate();
+
+        HttpEntity entity = new HttpEntity<>(headers); // http entity에 header 담아줌
+        try { // 깃허브에 파일 존재.
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                    "https://api.github.com/repos/" + leader.getName() + "/" + repoName + "/contents/" + path + fileName,
+                    HttpMethod.GET,
+                    entity,
+                    new ParameterizedTypeReference<>() {
+                    });
+            return response.getBody().get("sha").toString();
+        } catch (HttpClientErrorException e) { // 깃허브에 파일 존재 x. 새로 생성되는 파일인 경우 404 에러 뜸.
+            return null;
+        }
+    }
+
+    public void commitFileResponse(String sha, User leader, User user, String content, String fileName, String path, String repoName, String commitMessage) throws IOException {
+        HttpHeaders headers = makeHeader(user);
+        CommitFileRequest request = new CommitFileRequest();
+        request.setMessage(commitMessage);
+        request.setContent(Base64.getEncoder().encodeToString(content.getBytes())); // 내용 base64로 인코딩 해줘야됨 (필수)
+
+        if (sha != null) { // 기존 파일 수정하는 거면 sha 바디에 추가해야됨
+            request.setSha(sha);
+        }
+
+        HttpEntity<CommitFileRequest> entity = new HttpEntity<>(request, headers);
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                "https://api.github.com/repos/" + leader.getName() + "/" + repoName + "/contents/" + path + fileName,
+                HttpMethod.PUT,
+                entity,
+                new ParameterizedTypeReference<>() {
+                });
+    }
+
+    public void deleteFileResponse(String sha, User leader, User user, String repoName, String path, String fileName, String commitMessage) {
+        HttpHeaders headers = makeHeader(user);
+        DeleteSolution request = new DeleteSolution();
+        request.setMessage(commitMessage);
+
+        if (sha != null)
+            request.setSha(sha);
+
+        HttpEntity<DeleteSolution> entity = new HttpEntity<>(request, headers);
+
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                "https://api.github.com/repos/" + leader.getName() + "/" + repoName + "/contents/" + path + fileName,
                 HttpMethod.DELETE,
                 entity,
                 new ParameterizedTypeReference<>() {
