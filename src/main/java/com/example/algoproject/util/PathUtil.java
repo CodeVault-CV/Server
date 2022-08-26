@@ -17,8 +17,8 @@ public class PathUtil {
         return problem.getPlatform() + "/[" + problem.getNumber() + "]" + problem.getName();
     }
 
-    public String makeCommitMessage(Problem problem, String name) {
+    public String makeCommitMessage(Problem problem, String name, String request) {
         //  플랫폼 [문제번호]문제이름 By 사용자이름
-        return problem.getPlatform() + " [" + problem.getNumber() + "]" + problem.getName() + " By " + name;
+        return request + problem.getPlatform() + " [" + problem.getNumber() + "]" + problem.getName() + " By " + name;
     }
 }

@@ -64,7 +64,7 @@ public class SolutionService {
         Timestamp timestamp = new Timestamp(date);
         String path = pathUtil.makeGithubPath(problem, user.getName()) + "/";
         String fileName = problem.getNumber() + "." + mappedToExtension(addSolution.getLanguage()); // 문제 번호 + 프론트에서 주는 언어에 맞춰서 확장자 매핑해서 파일명 생성
-        String commitMessage = pathUtil.makeCommitMessage(problem, user.getName()); // 커밋메세지 만듦
+        String commitMessage = pathUtil.makeCommitMessage(problem, user.getName(), "Create "); // 커밋메세지 만듦
 
         log.info("github repository path : " + path);
 
@@ -127,7 +127,7 @@ public class SolutionService {
 
         long date = System.currentTimeMillis();
         Timestamp timestamp = new Timestamp(date);
-        String commitMessage = pathUtil.makeCommitMessage(problem, user.getName()); // 커밋메세지 만듦
+        String commitMessage = pathUtil.makeCommitMessage(problem, user.getName(), "Update "); // 커밋메세지 만듦
 
         /* github file commit */
         String codeSHA = githubService.checkFileResponse(leader, user, solution.getCodePath(), study.getRepositoryName()); // code
@@ -158,7 +158,7 @@ public class SolutionService {
 
         solutionRepository.delete(solution); // 솔루션 DB 삭제
 
-        String commitMessage = pathUtil.makeCommitMessage(problem, user.getName()); // 커밋메세지 만듦
+        String commitMessage = pathUtil.makeCommitMessage(problem, user.getName(), "Delete "); // 커밋메세지 만듦
 
         String codeSHA = githubService.checkFileResponse(leader, user, solution.getCodePath(), study.getRepositoryName());
         String readMeSHA = githubService.checkFileResponse(leader, user, solution.getReadMePath(), study.getRepositoryName());
