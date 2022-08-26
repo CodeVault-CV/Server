@@ -9,6 +9,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import javax.persistence.*;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 @NoArgsConstructor
 @Getter
@@ -26,12 +27,10 @@ public class Review {
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm", timezone = "Asia/Seoul")
     @Column(updatable = false)
-    @CreationTimestamp
-    private Timestamp createdTime;
+    private LocalDateTime createdTime;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm", timezone = "Asia/Seoul")
-    @UpdateTimestamp
-    private Timestamp updatedTime;
+    private LocalDateTime updatedTime;
 
     @JsonIgnore
     @ManyToOne
@@ -42,6 +41,8 @@ public class Review {
         this.userId = userId;
         this.userName = userName;
         this.content = content;
+        this.createdTime = LocalDateTime.now();
+        this.updatedTime = LocalDateTime.now();
     }
 
     public void setSolution(Solution solution) {
@@ -52,5 +53,6 @@ public class Review {
 
     public void setContent(String content) {
         this.content = content;
+        this.updatedTime = LocalDateTime.now();
     }
 }
