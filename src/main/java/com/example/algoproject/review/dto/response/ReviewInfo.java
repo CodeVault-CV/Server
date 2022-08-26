@@ -4,7 +4,7 @@ import com.example.algoproject.review.domain.Review;
 import lombok.Data;
 
 import javax.validation.constraints.NotNull;
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 @Data
 public class ReviewInfo {
@@ -22,10 +22,10 @@ public class ReviewInfo {
     private String content;
 
     @NotNull
-    private Timestamp createdTime;
+    private LocalDateTime createdTime;
 
     @NotNull
-    private Timestamp updatedTime;
+    private LocalDateTime updatedTime;
 
     public ReviewInfo(Review review) {
         this.id = review.getId();
