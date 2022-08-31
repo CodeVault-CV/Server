@@ -186,7 +186,7 @@ public class StudyService {
         }
 
         // 스터디 레포지토리의 삭제됐을 때에 데이터베이스의 스터디 삭제
-        else {
+        else if (response.get("action").equals("deleted")){
             log.info("study: {}'s repository is deleted...Delete study at database, too", study.getName());
             belongsToService.deleteAllByStudy(study);
             studyRepository.delete(study);
@@ -209,7 +209,7 @@ public class StudyService {
         }
 
         // contributor 삭제됐을 때에 데이터베이스에서 삭제
-        else {
+        else if (response.get("action").equals("removed")) {
             log.info("member: {} removed to study: {}", member.getName(), study.getName());
             belongsToService.deleteByStudyAndMember(study, member);
         }
