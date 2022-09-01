@@ -274,6 +274,11 @@ public class StudyService {
     }
 
     private List<UserInfo> findUserByNameContains(String name, Study study) {
+
+        // 만약 빈 문자열이면 빈 리스트를 반환
+        if (name.equals(""))
+            return new ArrayList<>();
+
         List<User> users = userService.findByNameContains(name);
         List<User> members = getMembers(study);
         List<UserInfo> infos = new ArrayList<>();
