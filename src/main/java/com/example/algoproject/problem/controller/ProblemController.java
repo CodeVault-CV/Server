@@ -2,6 +2,7 @@ package com.example.algoproject.problem.controller;
 
 import com.example.algoproject.errors.response.*;
 import com.example.algoproject.problem.dto.request.AddProblem;
+import com.example.algoproject.problem.dto.request.DeleteProblem;
 import com.example.algoproject.problem.service.ProblemService;
 import com.example.algoproject.user.dto.CustomUserDetailsVO;
 import com.example.algoproject.util.Auth;
@@ -22,7 +23,7 @@ public class ProblemController {
     private final ProblemService problemService;
 
     @Auth(role = LEADER)
-    @Operation(summary="문제 추가(팀장만 가능)", description="세션 ID, 문제의 번호, 이름, 플랫폼을 받아 문제의 정보 반환")
+    @Operation(summary="문제 추가(팀장만 가능)", description="세션 ID, 문제의 ID를 받아 문제의 정보 반환")
     @PostMapping()
     public CommonResponse problemAdd(@AuthenticationPrincipal @RequestBody @Valid AddProblem request) {
         return problemService.create(request);
@@ -38,7 +39,8 @@ public class ProblemController {
     @Auth(role = LEADER)
     @Operation(summary = "문제 삭제(팀장만 가능)", description = "문제 ID로 문제를 삭제후 성공 여부만 반환")
     @DeleteMapping("/{id}")
-    public CommonResponse problemRemove(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @PathVariable Long id) {
-        return problemService.delete(cudVO, id);
+    public CommonResponse problemRemove(@AuthenticationPrincipal CustomUserDetailsVO cudVO,
+                                        @PathVariable Long id, @RequestBody @Valid DeleteProblem request) {
+        return problemService.delete(cudVO, id, request);
     }
 }

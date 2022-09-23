@@ -2,6 +2,7 @@ package com.example.algoproject.solution.controller;
 
 import com.example.algoproject.errors.response.CommonResponse;
 import com.example.algoproject.solution.dto.request.AddSolution;
+import com.example.algoproject.solution.dto.request.ListSolution;
 import com.example.algoproject.solution.dto.request.UpdateSolution;
 import com.example.algoproject.solution.service.SolutionService;
 import com.example.algoproject.user.dto.CustomUserDetailsVO;
@@ -11,7 +12,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
 import java.util.Map;
 
 import static com.example.algoproject.util.Auth.Role.*;
@@ -24,9 +24,9 @@ public class SolutionController {
     private final SolutionService solutionService;
 
     @Auth(role = MEMBER)
-    @Operation(summary="솔루션 생성", description="문제ID, code, readme, language를 받아 생성하고 솔루션의 정보를 반환")
+    @Operation(summary="솔루션 생성", description="문제ID, 세션ID, code, readme, language를 받아 생성하고 솔루션의 정보를 반환")
     @PostMapping()
-    public CommonResponse solutionAdd(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @RequestBody AddSolution solution) throws IOException {
+    public CommonResponse solutionAdd(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @RequestBody AddSolution solution) {
         return solutionService.create(cudVO, solution);
     }
 
@@ -39,15 +39,15 @@ public class SolutionController {
 
     @Auth(role = MEMBER)
     @Operation(summary="팀원들의 솔루션 등록 여부 조회", description="해당 문제를 풀어야하는 팀원들의 목록과 솔루션 등록 여부 list를 반환.")
-    @GetMapping("/list/{problemId}")
-    public CommonResponse solutionList(@AuthenticationPrincipal @PathVariable("problemId") Long problemId) {
-        return solutionService.list(problemId);
+    @GetMapping("/list")
+    public CommonResponse solutionList(@AuthenticationPrincipal ListSolution request) {
+        return solutionService.list(request);
     }
 
     @Auth(role = MEMBER)
     @Operation(summary="솔루션 업데이트", description="솔루션 수정 후 솔루션의 정보를 반환")
     @PutMapping(value="/{id}")
-    public CommonResponse update(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @RequestBody UpdateSolution solution, @PathVariable("id") Long id) throws IOException {
+    public CommonResponse update(@AuthenticationPrincipal CustomUserDetailsVO cudVO, @RequestBody UpdateSolution solution, @PathVariable("id") Long id){
         return solutionService.update(cudVO, id, solution);
     }
 

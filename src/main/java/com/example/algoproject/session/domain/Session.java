@@ -32,24 +32,10 @@ public class Session {
     @JoinColumn(name = "study_id")
     private Study study;
 
-    @OneToMany(
-            mappedBy = "session",
-            cascade = {CascadeType.ALL},
-            orphanRemoval = true
-    )
-    private List<Problem> problems = new ArrayList<>();
-
     public Session(CreateSession request) {
         this.name = request.getName();
         this.start = request.getStart();
         this.end = request.getEnd();
-    }
-
-    public void addProblem(Problem problem) {
-        this.problems.add(problem);
-
-        if(problem.getSession() != this)
-            problem.setSession(this);
     }
 
     public void update(UpdateSession request) {

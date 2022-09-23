@@ -1,5 +1,7 @@
 package com.example.algoproject.session.service;
 
+import com.example.algoproject.contain.domain.Contain;
+import com.example.algoproject.contain.service.ContainService;
 import com.example.algoproject.errors.exception.notfound.NotExistSessionException;
 import com.example.algoproject.errors.response.CommonResponse;
 import com.example.algoproject.errors.response.ResponseService;
@@ -23,16 +25,17 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 @RequiredArgsConstructor
 @Service
 public class SessionService {
 
-    private final UserService userService;
     private final SessionRepository sessionRepository;
+    private final UserService userService;
     private final ResponseService responseService;
     private final StudyService studyService;
-
+    private final ContainService containService;
     private final GithubService githubService;
 
     @Transactional
@@ -75,29 +78,21 @@ public class SessionService {
         User user = userService.findById(cudVO.getUsername());
         Study study = session.getStudy();
 
-        // 관련 솔루션 삭제
-        for (Problem problem: session.getProblems()) {
-            for (Solution solution: problem.getSolutions()) {
-                String codeSHA = githubService.checkFileResponse(user, user, solution.getCodePath(), study.getRepositoryName());
-                String readMeSHA = githubService.checkFileResponse(user, user, solution.getReadMePath(), study.getRepositoryName());
+        // 관련 솔루션 file 삭제
+        containService.findBySession(session).stream()
+                .map(Contain::getSolutions)
+                .flatMap(List::stream)
+                .forEach(solution -> removeGithubFile(user,study,solution));
 
-                githubService.deleteFileResponse(codeSHA, user, user, study.getRepositoryName(), solution.getCodePath(), "delete");
-                githubService.deleteFileResponse(readMeSHA, user, user, study.getRepositoryName(), solution.getReadMePath(), "delete");
-            }
-        }
-
+        containService.deleteAllBySession(session);
         sessionRepository.delete(session);
+
         return responseService.getSuccessResponse();
     }
 
     @Transactional(readOnly = true)
     public Session findById(Long id) {
         return sessionRepository.findById(id).orElseThrow(NotExistSessionException::new);
-    }
-
-    @Transactional
-    public void save(Session session) {
-        sessionRepository.save(session);
     }
 
     //
@@ -108,5 +103,13 @@ public class SessionService {
         for (Session session : sessions)
             sessionInfos.add(new SessionInfo(session));
         return sessionInfos;
+    }
+
+    private void removeGithubFile(User user, Study study, Solution solution) {
+        String codeSHA = githubService.checkFileResponse(user, user, solution.getCodePath(), study.getRepositoryName());
+        String readMeSHA = githubService.checkFileResponse(user, user, solution.getReadMePath(), study.getRepositoryName());
+
+        githubService.deleteFileResponse(codeSHA, user, user, study.getRepositoryName(), solution.getCodePath(), "delete");
+        githubService.deleteFileResponse(readMeSHA, user, user, study.getRepositoryName(), solution.getReadMePath(), "delete");
     }
 }

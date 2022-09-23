@@ -190,7 +190,7 @@ public class GithubService {
         }
     }
 
-    public void commitFileResponse(String sha, User leader, User user, String content, String fileName, String path, String repoName, String commitMessage) throws IOException {
+    public void commitFileResponse(String sha, User leader, User user, String content, String fileName, String path, String repoName, String commitMessage){
         HttpHeaders headers = makeHeader(user);
         CommitFileRequest request = new CommitFileRequest();
         request.setMessage(commitMessage);
