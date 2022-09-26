@@ -40,7 +40,7 @@ public class SolutionController {
     @Auth(role = MEMBER)
     @Operation(summary="팀원들의 솔루션 등록 여부 조회", description="해당 문제를 풀어야하는 팀원들의 목록과 솔루션 등록 여부 list를 반환.")
     @GetMapping("/list")
-    public CommonResponse solutionList(@AuthenticationPrincipal ListSolution request) {
+    public CommonResponse solutionList(@AuthenticationPrincipal @RequestBody ListSolution request) {
         return solutionService.list(request);
     }
 

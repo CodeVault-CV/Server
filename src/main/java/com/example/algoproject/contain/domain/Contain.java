@@ -16,7 +16,7 @@ import java.util.List;
 public class Contain {
 
     @Id
-    @Column(name = "contatin_id")
+    @Column(name = "contain_id")
     @GeneratedValue
     private Long id;
 
