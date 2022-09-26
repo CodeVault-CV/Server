@@ -2,6 +2,8 @@ package com.example.algoproject.solution.service;
 
 import com.example.algoproject.belongsto.domain.BelongsTo;
 import com.example.algoproject.belongsto.service.BelongsToService;
+import com.example.algoproject.contain.domain.Contain;
+import com.example.algoproject.contain.service.ContainService;
 import com.example.algoproject.errors.exception.badrequest.NotMatchProblemAndSolutionException;
 import com.example.algoproject.errors.exception.notfound.NotExistSolutionException;
 import com.example.algoproject.errors.exception.badrequest.NotMySolutionException;
@@ -11,9 +13,12 @@ import com.example.algoproject.errors.response.ResponseService;
 import com.example.algoproject.github.service.GithubService;
 import com.example.algoproject.problem.domain.Problem;
 import com.example.algoproject.problem.service.ProblemService;
+import com.example.algoproject.session.domain.Session;
+import com.example.algoproject.session.service.SessionService;
 import com.example.algoproject.solution.domain.Language;
 import com.example.algoproject.solution.domain.Solution;
 import com.example.algoproject.solution.dto.request.AddSolution;
+import com.example.algoproject.solution.dto.request.ListSolution;
 import com.example.algoproject.solution.dto.request.UpdateSolution;
 import com.example.algoproject.solution.dto.response.SolutionInfo;
 import com.example.algoproject.solution.dto.response.SolutionListInfo;
@@ -29,7 +34,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.*;
 
@@ -40,24 +44,26 @@ public class SolutionService {
 
     private final SolutionRepository solutionRepository;
     private final UserService userService;
-    private final ProblemService problemService;
     private final StudyService studyService;
+    private final SessionService sessionService;
+    private final ProblemService problemService;
+    private final ContainService containService;
     private final BelongsToService belongsToService;
-
     private final ResponseService responseService;
     private final PathUtil pathUtil;
     private final GithubService githubService;
 
     @Transactional
-    public CommonResponse create(CustomUserDetailsVO cudVO, AddSolution addSolution) throws IOException {
+    public CommonResponse create(CustomUserDetailsVO cudVO, AddSolution addSolution){
 
         User user = userService.findById(cudVO.getUsername());
         Problem problem = problemService.findById(addSolution.getProblemId());
-        Study study = studyService.findById(problem.getSession().getStudy().getId());
+        Session session = sessionService.findById(addSolution.getSessionId());
+        Contain contain = containService.findBySessionAndProblem(session, problem);
+        Study study = session.getStudy();
         User leader = userService.findById(study.getLeaderId());
-        Optional<Solution> alreadyExist = solutionRepository.findByProblemAndUser(problem, user);
 
-        if (alreadyExist.isPresent()) // 이미 현재유저가 해당 문제에 솔루션 등록했는지 확인
+        if (solutionRepository.findByUserAndContain(user, contain).isPresent()) // 이미 현재유저가 해당 문제에 솔루션 등록했는지 확인
             throw new AlreadyExistSolutionException();
 
         long date = System.currentTimeMillis(); // 솔루션 등록한 시간 기록
@@ -66,8 +72,6 @@ public class SolutionService {
         String fileName = problem.getNumber() + "." + mappedToExtension(addSolution.getLanguage()); // 문제 번호 + 프론트에서 주는 언어에 맞춰서 확장자 매핑해서 파일명 생성
         String commitMessage = pathUtil.makeCommitMessage(problem, user.getName(), "Create "); // 커밋메세지 만듦
 
-        log.info("github repository path : " + path);
-
         /* github에 file commit */
         String codeSHA = githubService.checkFileResponse(leader, user, path + fileName, study.getRepositoryName()); // code
         String readMeSHA = githubService.checkFileResponse(leader, user, path + "README.md", study.getRepositoryName()); // readMe
@@ -75,8 +79,10 @@ public class SolutionService {
         githubService.commitFileResponse(codeSHA, leader, user, addSolution.getCode(), fileName, path, study.getRepositoryName(), commitMessage);
         githubService.commitFileResponse(readMeSHA, leader, user, addSolution.getReadMe(), "README.md", path, study.getRepositoryName(), commitMessage);
 
+        log.info("github repository path : " + path);
+
         /* DB에 저장 */
-        Solution solution = new Solution(user, problem, addSolution.getCode(), addSolution.getReadMe(), timestamp, addSolution.getLanguage(), path + fileName, path + "README.md");
+        Solution solution = new Solution(user, contain, addSolution.getCode(), addSolution.getReadMe(), timestamp, addSolution.getLanguage(), path + fileName, path + "README.md");
         solutionRepository.save(solution);
 
         return responseService.getSingleResponse(new SolutionInfo(solution, user));
@@ -89,11 +95,14 @@ public class SolutionService {
     }
 
     @Transactional(readOnly = true)
-    public CommonResponse list(Long problemId) {
-        Problem problem = problemService.findById(problemId);
-        Study study = studyService.findById(problem.getSession().getStudy().getId());
-        List<BelongsTo> belongs =  belongsToService.findByStudy(study);
-        List<Solution> solutions = solutionRepository.findByProblem(problem);
+    public CommonResponse list(ListSolution request) {
+
+        Problem problem = problemService.findById(request.getProblemId());
+        Session session = sessionService.findById(request.getSessionId());
+        Contain contain = containService.findBySessionAndProblem(session, problem);
+
+        List<BelongsTo> belongs =  belongsToService.findByStudy(session.getStudy());
+        List<Solution> solutions = contain.getSolutions();
         List<SolutionListInfo> list = new ArrayList<>();
 
         for (User member: getMemberList(belongs)) { // 현재 스터디의 팀원들 중에서, probelmId를 푼 팀원은 언어와 풀이여부 true 반환. 안 풀었으면 false 반환.
@@ -112,18 +121,20 @@ public class SolutionService {
     }
 
     @Transactional
-    public CommonResponse update(CustomUserDetailsVO cudVO, Long solutionId, UpdateSolution updateSolution) throws IOException {
+    public CommonResponse update(CustomUserDetailsVO cudVO, Long solutionId, UpdateSolution updateSolution){
 
         User user = userService.findById(cudVO.getUsername());
-        Solution solution = solutionRepository.findById(solutionId).orElseThrow(NotExistSolutionException::new);
         Problem problem = problemService.findById(updateSolution.getProblemId());
-        Study study = studyService.findById(problem.getSession().getStudy().getId());
+        Session session = sessionService.findById(updateSolution.getSessionId());
+        Solution solution = solutionRepository.findById(solutionId).orElseThrow(NotExistSolutionException::new);
+        Study study = session.getStudy();
         User leader = userService.findById(study.getLeaderId());
 
         checkMySolution(user, solution); // 내 솔루션인지 확인
 
-        if (problem.getId() != solution.getProblem().getId()) // 요청한 solutionId가 속한 문제와 요청한 문제가 다른경우 확인
-            throw new NotMatchProblemAndSolutionException();
+        // TODO 추후에 로직을 변경
+        //if (problem.getId() != solution.getProblem().getId()) // 요청한 solutionId가 속한 문제와 요청한 문제가 다른경우 확인
+        //    throw new NotMatchProblemAndSolutionException();
 
         long date = System.currentTimeMillis();
         Timestamp timestamp = new Timestamp(date);
@@ -150,8 +161,9 @@ public class SolutionService {
 
         User user = userService.findById(cudVO.getUsername());
         Solution solution = findById(id);
-        Problem problem = solution.getProblem();
-        Study study = studyService.findById(problem.getSession().getStudy().getId());
+        Problem problem = solution.getContain().getProblem();
+        Session session = solution.getContain().getSession();
+        Study study = studyService.findById(session.getStudy().getId());
         User leader = userService.findById(study.getLeaderId());
 
         checkMySolution(user, solution); // 내 솔루션인지 확인
@@ -163,6 +175,7 @@ public class SolutionService {
         String codeSHA = githubService.checkFileResponse(leader, user, solution.getCodePath(), study.getRepositoryName());
         String readMeSHA = githubService.checkFileResponse(leader, user, solution.getReadMePath(), study.getRepositoryName());
         log.info("solution delete: " + codeSHA);
+
         // 솔루션 github 삭제
         githubService.deleteFileResponse(codeSHA, leader, user, study.getRepositoryName(), solution.getCodePath(), commitMessage);
         githubService.deleteFileResponse(readMeSHA, leader, user, study.getRepositoryName(), solution.getReadMePath(), commitMessage);
@@ -206,11 +219,6 @@ public class SolutionService {
     }
 
     @Transactional(readOnly = true)
-    public List<Solution> findByProblem(Problem problem) {
-        return solutionRepository.findByProblem(problem);
-    }
-
-    @Transactional(readOnly = true)
     public Optional<Solution> findByPath(String path) {
         Optional<Solution> solutionCode = solutionRepository.findByCodePath(path);
         Optional<Solution> solutionReadMe = solutionRepository.findByReadMePath(path);
@@ -246,7 +254,7 @@ public class SolutionService {
 
     private String mappedToExtension(String language) {
 
-        String extension = switch (language) {
+        return switch (language) {
             case "cpp" -> "cpp";
             case "java" -> "java";
             case "javascript" -> "js";
@@ -256,7 +264,5 @@ public class SolutionService {
             case "typescript" -> "ts";
             default -> "none";
         };
-        return extension;
     }
-
 }

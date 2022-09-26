@@ -1,7 +1,7 @@
 package com.example.algoproject.solution.domain;
 
+import com.example.algoproject.contain.domain.Contain;
 import com.example.algoproject.review.domain.Review;
-import com.example.algoproject.problem.domain.Problem;
 import com.example.algoproject.user.domain.User;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -41,8 +41,8 @@ public class Solution {
     private User user;
 
     @ManyToOne
-    @JoinColumn(name = "problem_id")
-    private Problem problem;
+    @JoinColumn(name = "contain_id")
+    private Contain contain;
 
     @OneToMany(
             mappedBy = "solution",
@@ -51,9 +51,9 @@ public class Solution {
     )
     private List<Review> reviews = new ArrayList<>();
 
-    public Solution(User user, Problem problem, String code, String readMe, Timestamp date, String language, String codePath, String readMePath) {
+    public Solution(User user, Contain contain, String code, String readMe, Timestamp date, String language, String codePath, String readMePath) {
         this.user = user;
-        this.problem = problem;
+        this.contain = contain;
         this.code = code;
         this.readMe = readMe;
         this.date = date;
@@ -68,10 +68,10 @@ public class Solution {
             review.setSolution(this);
     }
 
-    public void setProblem(Problem problem) {
-        this.problem = problem;
+    public void setContain(Contain contain) {
+        this.contain = contain;
 
-        if(!problem.getSolutions().contains(this))
-            problem.getSolutions().add(this);
+        if(!contain.getSolutions().contains(this))
+            contain.getSolutions().add(this);
     }
 }

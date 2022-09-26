@@ -9,5 +9,4 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ProblemRepository extends JpaRepository<Problem, Long> {
-    List<Problem> findBySession(Session session);
 }

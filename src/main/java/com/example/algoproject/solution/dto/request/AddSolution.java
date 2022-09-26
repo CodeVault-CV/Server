@@ -13,6 +13,9 @@ public class AddSolution {
     private Long problemId;
 
     @NotNull
+    private Long sessionId;
+
+    @NotNull
     @Lob
     private String code;
 
