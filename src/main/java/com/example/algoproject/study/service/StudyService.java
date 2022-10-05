@@ -56,7 +56,7 @@ public class StudyService {
         githubService.createWebhook(leader, request.getRepoName());
 
         Study study = new Study(response.get("id").toString(), request.getStudyName(), cudVO.getUsername(), response.get("name").toString(), response.get("html_url").toString());
-        studyRepository.save(study);
+        //studyRepository.save(study);
 
         // 스터디 생성시 팀장을 스터디 멤버에 추가
         belongsToService.save(new BelongsTo(leader, study));

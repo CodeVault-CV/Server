@@ -20,7 +20,7 @@ public class BelongsTo {
     @JoinColumn(name = "user_id")
     private User member;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "study_id")
     private Study study;
 
