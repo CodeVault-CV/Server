@@ -6,12 +6,18 @@ import com.example.algoproject.problem.dto.request.DeleteProblem;
 import com.example.algoproject.problem.service.ProblemService;
 import com.example.algoproject.user.dto.CustomUserDetailsVO;
 import com.example.algoproject.util.Auth;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import static com.example.algoproject.util.Auth.Role.*;
 
@@ -23,7 +29,7 @@ public class ProblemController {
     private final ProblemService problemService;
 
     @Auth(role = LEADER)
-    @Operation(summary="문제 추가(팀장만 가능)", description="세션 ID, 문제의 ID를 받아 문제의 정보 반환")
+    @Operation(summary = "문제 추가(팀장만 가능)", description = "세션 ID, 문제의 ID를 받아 문제의 정보 반환")
     @PostMapping()
     public CommonResponse problemAdd(@AuthenticationPrincipal @RequestBody @Valid AddProblem request) {
         return problemService.create(request);
@@ -42,5 +48,12 @@ public class ProblemController {
     public CommonResponse problemRemove(@AuthenticationPrincipal CustomUserDetailsVO cudVO,
                                         @PathVariable Long id, @RequestBody @Valid DeleteProblem request) {
         return problemService.delete(cudVO, id, request);
+    }
+
+    @GetMapping("/test")
+    public void test() throws ExecutionException, InterruptedException, IOException {
+        problemService.getBoJTags();
+        problemService.getBojProblems();
+        problemService.getProgrammersProblems();
     }
 }

@@ -25,11 +25,11 @@ public class Problem {
 
     private Platform platform;
 
-    public Problem(String number, String name, int level, String platform) {
+    public Problem(String number, String name, int level, Platform platform) {
         this.number = number;
         this.name = name;
         this.level = level;
-        this.platform = Platform.valueOf(platform);
+        this.platform = platform;
         this.url = this.platform.getUrl() + number;
     }
 }
