@@ -1,6 +1,5 @@
 package com.example.algoproject.study.domain;
 
-import com.example.algoproject.errors.exception.forbidden.NotLeaderUserException;
 import com.example.algoproject.session.domain.Session;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
