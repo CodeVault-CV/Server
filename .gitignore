@@ -9,6 +9,7 @@ build/
 src/main/resources/application.properties
 src/main/resources/app.properties
 src/main/resources/application.yaml
+src/main/resources/problems.json
 
 ### IntelliJ IDEA ###
 .idea
