@@ -1,10 +1,10 @@
-package com.example.algoproject;
+package com.example.cv;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class AlgoprojectApplicationTests {
+class CodeVaultApplicationTests {
 
 	@Test
 	void contextLoads() {

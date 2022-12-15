@@ -1,8 +1,0 @@
-package com.example.algoproject.errors.exception.badrequest;
-
-public class NotWriterUserException extends BadRequestException {
-    private static final String MESSAGE = "해당 글의 글쓴이가 아닙니다";
-    public NotWriterUserException() {
-        super(MESSAGE);
-    }
-}

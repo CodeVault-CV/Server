@@ -1,13 +1,13 @@
-package com.example.algoproject;
+package com.example.cv;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class AlgoprojectApplication {
+public class CodeVaultApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(AlgoprojectApplication.class, args);
+		SpringApplication.run(CodeVaultApplication.class, args);
 	}
 
 }
