@@ -1,8 +1,6 @@
 package com.example.cv.oauth.service;
 
-import com.example.cv.oauth.domain.GoogleOauth;
-import com.example.cv.oauth.domain.GoogleOauthToken;
-import com.example.cv.oauth.domain.OauthType;
+import com.example.cv.oauth.domain.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -12,12 +10,14 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 import static com.example.cv.oauth.domain.OauthType.GOOGLE;
+import static com.example.cv.oauth.domain.OauthType.KAKAO;
 
 @Service
 @RequiredArgsConstructor
 public class OauthService {
 
     private final GoogleOauth googleOauth;
+    private final KakaoOauth kakaoOauth;
     private final HttpServletResponse response;
 
     public void request(OauthType type) {
@@ -28,6 +28,9 @@ public class OauthService {
             if (type == GOOGLE) {
                 url = googleOauth.getOauthRedirectURL();
             }
+            if (type == KAKAO) {
+                url = kakaoOauth.getOauthRedirectURL();
+            }
             response.sendRedirect(url);
         } catch (IOException e) {
             System.out.println(e.getMessage());
@@ -35,10 +38,18 @@ public class OauthService {
     }
 
     public void login(OauthType type, String code) throws JsonProcessingException {
-        ResponseEntity<String> accessTokenResponse = googleOauth.requestAccessToken(code);
-        GoogleOauthToken oauthToken = googleOauth.getAccessToken(accessTokenResponse);
-        ResponseEntity<String> userInfoResponse = googleOauth.requestUserInfo(oauthToken);
+        if (type == GOOGLE) {
+            ResponseEntity<String> accessTokenResponse = googleOauth.requestAccessToken(code);
+            GoogleOauthToken oauthToken = googleOauth.getAccessToken(accessTokenResponse);
+            ResponseEntity<String> userInfoResponse = googleOauth.requestUserInfo(oauthToken);
+            System.out.println(userInfoResponse.getBody());
+        }
 
-        System.out.println(userInfoResponse.toString());
+        if (type == KAKAO) {
+            ResponseEntity<String> accessTokenResponse = kakaoOauth.requestAccessToken(code);
+            KakaoOauthToken oauthToken = kakaoOauth.getAcessToken(accessTokenResponse);
+            ResponseEntity<String> userInfoResponse = kakaoOauth.requestUserInfo(oauthToken);
+            System.out.println(userInfoResponse.getBody());
+        }
     }
 }
