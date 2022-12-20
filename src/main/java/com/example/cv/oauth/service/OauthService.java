@@ -1,5 +1,7 @@
 package com.example.cv.oauth.service;
 
+import com.example.cv.oauth.domain.GithubOauth;
+import com.example.cv.oauth.domain.GithubTokenDto;
 import com.example.cv.oauth.domain.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,16 @@ public class OauthService {
     private final KakaoOauth kakaoOauth;
     private final NaverOauth naverOauth;
     private final HttpServletResponse response;
+
+    private final GithubOauth githubOauth;
+
+    public String login(String code) {
+        GithubTokenDto oauthToken = githubOauth.getAccessToken(code);
+        System.out.println(oauthToken.getAccess_token());
+
+        return oauthToken.getAccess_token();
+    }
+
 
     public void request(OauthType type) {
 
