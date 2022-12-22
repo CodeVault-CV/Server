@@ -1,9 +1,7 @@
 package com.example.cv.oauth.controller;
 
 import com.example.cv.oauth.domain.OauthType;
-import com.example.cv.github.service.GithubService;
 import com.example.cv.oauth.service.OauthService;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -15,21 +13,14 @@ import org.springframework.web.bind.annotation.*;
 public class OauthController {
 
     private final OauthService service;
-    private final GithubService githubService;
 
-    @GetMapping("/login")
-    public void login(@RequestParam String code) {
-        String accessToken = oauthService.login(code);
+    @GetMapping("/{type}")
+    public void redirectLogin(@PathVariable String type) {
+        service.request(OauthType.valueOf(type.toUpperCase()));
     }
 
-    @GetMapping("/{oauthType}")
-    public void redirectLogin(@PathVariable(name = "oauthType") String type) {
-        OauthType oauthType = OauthType.valueOf(type.toUpperCase());
-        service.request(oauthType);
-    }
-
-    @GetMapping("/{oauthType}/callback")
-    public void callback(@PathVariable String oauthType, @RequestParam String code) throws JsonProcessingException {
-        service.login(OauthType.valueOf(oauthType.toUpperCase()), code);
+    @GetMapping("/{type}/callback")
+    public void callback(@PathVariable String type, @RequestParam String code) {
+        service.login(OauthType.valueOf(type.toUpperCase()), code);
     }
 }

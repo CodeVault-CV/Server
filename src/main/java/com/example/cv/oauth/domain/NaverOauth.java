@@ -6,10 +6,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -28,64 +26,67 @@ public class NaverOauth implements Oauth {
     @Value("${spring.oauth.naver.callback-url}")
     private String CALLBACK_URL;
 
+    @Value("${spring.oauth.naver.token-url}")
+    private String TOKEN_URL;
+
+    @Value("${spring.oauth.naver.user-info-url}")
+    private String USER_INFO_URL;
+
     @Value("${spring.oauth.naver.state}")
     private String STATE;
 
-    private final ObjectMapper mapper;
-
     @Override
     public String getOauthRedirectURL() {
-        Map<String, Object> params = new HashMap<>();
-        params.put("response_type", "code");
-        params.put("client_id", CLIENT_ID);
-        params.put("redirect_uri", CALLBACK_URL);
-        params.put("state", STATE);
-
-        // parameter 를 형식에 맞춰 구성해주는 함수
-        String parameterString = params.entrySet().stream()
-                .map(x -> x.getKey() + "=" + x.getValue())
-                .collect(Collectors.joining("&"));
-
-        return LOGIN_URL + "?" + parameterString;
+        return LOGIN_URL + "?" + paramsToString(Map.of(
+                "response_type", "code",
+                "client_id", CLIENT_ID,
+                "redirect_uri", CALLBACK_URL,
+                "state", STATE));
     }
 
-    public ResponseEntity<String> requestAccessToken(String code) {
-        String NAVER_TOKEN_REQUEST_URL = "https://nid.naver.com/oauth2.0/token";
+    @Override
+    public OauthToken getAccessToken(String code) {
         RestTemplate restTemplate = new RestTemplate();
-        Map<String, Object> params = new HashMap<>();
-        params.put("grant_type", "authorization_code");
-        params.put("client_id", CLIENT_ID);
-        params.put("client_secret", CLIENT_SECRET);
-        params.put("code", code);
-        params.put("state", STATE);
 
-        // parameter 를 형식에 맞춰 구성해주는 함수
-        String parameterString = params.entrySet().stream()
+        ResponseEntity<OauthToken> responseEntity = restTemplate.getForEntity(TOKEN_URL + "?" +
+                paramsToString(Map.of(
+                        "grant_type", "authorization_code",
+                        "client_id", CLIENT_ID,
+                        "client_secret", CLIENT_SECRET,
+                        "code", code,
+                        "state", STATE)), OauthToken.class);
+
+        if (HttpStatus.OK != responseEntity.getStatusCode()) {
+            throw new RuntimeException("액세스 토큰 요청 실패");
+        }
+
+        return responseEntity.getBody();
+    }
+
+    @Override
+    public String getUserInfo(OauthToken token) {
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.add("Authorization", "Bearer " + token.getAccess_token());
+
+            ResponseEntity<String> userInfoResponse = new RestTemplate()
+                    .exchange(USER_INFO_URL, HttpMethod.GET, new HttpEntity<>(headers), String.class);
+
+            if (userInfoResponse.getStatusCode() != HttpStatus.OK) {
+                throw new RuntimeException("사용자 정보 가져오기 실패");
+            }
+
+            Map<String, Map<String, String>> userInfo = new ObjectMapper().readValue(userInfoResponse.getBody(), Map.class);
+            return userInfo.get("response").get("id");
+
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private String paramsToString(Map<String, Object> params) {
+        return params.entrySet().stream()
                 .map(x -> x.getKey() + "=" + x.getValue())
                 .collect(Collectors.joining("&"));
-
-        ResponseEntity<String> responseEntity = restTemplate.getForEntity(NAVER_TOKEN_REQUEST_URL + "?" + parameterString, String.class);
-
-        if (HttpStatus.OK == responseEntity.getStatusCode()) {
-            return responseEntity;
-        }
-        return null;
-    }
-
-    public ResponseEntity<String> requestUserInfo(NaverOauthToken oAuthToken) {
-        String NAVER_USERINFO_REQUEST_URL = "https://openapi.naver.com/v1/nid/me";
-
-        //header에 accessToken을 담는다.
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Authorization", "Bearer " + oAuthToken.getAccess_token());
-
-        //HttpEntity를 하나 생성해 헤더를 담아서 restTemplate으로 구글과 통신하게 된다.
-        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(headers);
-
-        return new RestTemplate().exchange(NAVER_USERINFO_REQUEST_URL, HttpMethod.GET, request, String.class);
-    }
-
-    public NaverOauthToken getAccessToken(ResponseEntity<String> response) throws JsonProcessingException {
-        return mapper.readValue(response.getBody(), NaverOauthToken.class);
     }
 }

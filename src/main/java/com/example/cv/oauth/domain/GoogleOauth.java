@@ -6,10 +6,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -32,56 +30,63 @@ public class GoogleOauth implements Oauth {
     @Value("${spring.oauth.google.callback-url}")
     private String CALLBACK_URL;
 
-    private final ObjectMapper objectMapper;
+    @Value("${spring.oauth.google.token-url}")
+    private String TOKEN_URL;
+
+    @Value("${spring.oauth.google.user-info-url}")
+    private String USER_INFO_URL;
 
     @Override
     public String getOauthRedirectURL() {
-        Map<String, Object> params = new HashMap<>();
-        params.put("scope", DATA_ACCESS_SCOPE);
-        params.put("response_type", "code");
-        params.put("client_id", CLIENT_ID);
-        params.put("redirect_uri", CALLBACK_URL);
+        return LOGIN_URL + "?" + paramsToString(Map.of(
+                "scope", DATA_ACCESS_SCOPE,
+                "response_type", "code",
+                "client_id", CLIENT_ID,
+                "redirect_uri", CALLBACK_URL));
+    }
 
-        // parameter 를 형식에 맞춰 구성해주는 함수
-        String parameterString = params.entrySet().stream()
+    @Override
+    public OauthToken getAccessToken(String code) {
+        RestTemplate restTemplate = new RestTemplate();
+        Map<String, Object> params = Map.of(
+                "code", code,
+                "client_id", CLIENT_ID,
+                "client_secret", CLIENT_SECRET,
+                "redirect_uri", CALLBACK_URL,
+                "grant_type", "authorization_code");
+
+        ResponseEntity<OauthToken> responseEntity = restTemplate.postForEntity(TOKEN_URL, params, OauthToken.class);
+
+        if (HttpStatus.OK != responseEntity.getStatusCode()) {
+            throw new RuntimeException("액세스 토큰 요청 실패");
+        }
+        return responseEntity.getBody();
+    }
+
+    @Override
+    public String getUserInfo(OauthToken token) {
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.add("Authorization", "Bearer " + token.getAccess_token());
+
+            ResponseEntity<String> userInfoResponse = new RestTemplate()
+                    .exchange(USER_INFO_URL, HttpMethod.GET, new HttpEntity<>(headers), String.class);
+
+            if (userInfoResponse.getStatusCode() != HttpStatus.OK) {
+                throw new RuntimeException("사용자 정보 가져오기 실패");
+            }
+
+            Map<String, Object> userInfo = new ObjectMapper().readValue(userInfoResponse.getBody(), Map.class);
+            return userInfo.get("id").toString();
+
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private String paramsToString(Map<String, Object> params) {
+        return params.entrySet().stream()
                 .map(x -> x.getKey() + "=" + x.getValue())
                 .collect(Collectors.joining("&"));
-
-        return LOGIN_URL + "?" + parameterString;
-    }
-
-    public ResponseEntity<String> requestAccessToken(String code) {
-        String GOOGLE_TOKEN_REQUEST_URL = "https://oauth2.googleapis.com/token";
-        RestTemplate restTemplate = new RestTemplate();
-        Map<String, Object> params = new HashMap<>();
-        params.put("code", code);
-        params.put("client_id", CLIENT_ID);
-        params.put("client_secret", CLIENT_SECRET);
-        params.put("redirect_uri", CALLBACK_URL);
-        params.put("grant_type", "authorization_code");
-
-        ResponseEntity<String> responseEntity = restTemplate.postForEntity(GOOGLE_TOKEN_REQUEST_URL, params, String.class);
-
-        if (HttpStatus.OK == responseEntity.getStatusCode()) {
-            return responseEntity;
-        }
-        return null;
-    }
-
-    public ResponseEntity<String> requestUserInfo(GoogleOauthToken oAuthToken) {
-        String GOOGLE_USERINFO_REQUEST_URL = "https://www.googleapis.com/oauth2/v1/userinfo";
-
-        //header에 accessToken을 담는다.
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Authorization", "Bearer " + oAuthToken.getAccess_token());
-
-        //HttpEntity를 하나 생성해 헤더를 담아서 restTemplate으로 구글과 통신하게 된다.
-        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(headers);
-
-        return new RestTemplate().exchange(GOOGLE_USERINFO_REQUEST_URL, HttpMethod.GET, request, String.class);
-    }
-
-    public GoogleOauthToken getAccessToken(ResponseEntity<String> response) throws JsonProcessingException {
-        return objectMapper.readValue(response.getBody(), GoogleOauthToken.class);
     }
 }
