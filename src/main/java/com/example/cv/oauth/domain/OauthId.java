@@ -11,14 +11,14 @@ import java.io.Serializable;
 @Embeddable
 public class OauthId implements Serializable {
     private String id;
-    private Oauth type;
+    private SocialOauth type;
 
-    private OauthId(String id, Oauth type) {
+    private OauthId(String id, SocialOauth type) {
         this.id = id;
         this.type = type;
     }
 
-    public static OauthId of(String id, Oauth type) {
+    public static OauthId of(String id, SocialOauth type) {
         return new OauthId(id, type);
     }
 }
